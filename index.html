@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Gerencial - DomoNow</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
-        /* ESTILOS BASE ORIGINALES */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary-color: #1F4788;
@@ -27,8 +27,6 @@
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
         .dashboard-wrapper { display: flex; min-height: 100vh; }
-        
-        /* Sidebar Original */
         .sidebar { width: 260px; background: var(--primary-color); color: white; padding: 24px; box-shadow: 2px 0 12px rgba(0,0,0,0.08); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .logo { font-size: 20px; font-weight: 700; margin-bottom: 32px; display: flex; align-items: center; gap: 10px; }
         .nav-menu { list-style: none; }
@@ -36,20 +34,14 @@
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.8); text-decoration: none; border-radius: 8px; cursor: pointer; transition: all 300ms; border: 2px solid transparent; font-size: 14px; font-weight: 500; }
         .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
         .nav-link.active { background: rgba(255,255,255,0.25); color: white; border-color: rgba(255,255,255,0.5); }
-        
-        /* Main Content Original */
         .main-content { margin-left: 260px; flex: 1; padding: 32px; overflow-y: auto; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; background: var(--bg-card); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex-wrap: wrap; gap: 16px; }
         .header-title { font-size: 28px; font-weight: 700; color: var(--primary-color); }
         .header-actions { display: flex; gap: 12px; align-items: center; }
-        
-        /* Botones Originales */
         .action-btn { padding: 10px 18px; border: none; background: var(--primary-color); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 200ms; display: flex; align-items: center; gap: 8px; }
         .action-btn:hover { background: var(--accent-color); transform: translateY(-2px); }
         .action-btn.success { background: var(--success-color); }
-        .action-btn.info { background: var(--info-color); } /* Nuevo estilo para colaboradores */
-
-        /* Estilos de Secciones y Filtros Originales */
+        .action-btn.info { background: var(--info-color); }
         .section { display: none; }
         .section.active { display: block; animation: fadeIn 300ms ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -58,8 +50,6 @@
         .filter-btn { padding: 8px 14px; border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 200ms; color: var(--text-secondary); }
         .filter-btn:hover { border-color: var(--primary-light); background: var(--bg-light); }
         .filter-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-
-        /* Estilos de Tarjetas Originales */
         .indicator-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; margin-bottom: 16px; transition: all 300ms; }
         .indicator-card:hover { border-color: var(--primary-light); box-shadow: 0 4px 12px rgba(31, 71, 136, 0.1); }
         .indicator-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
@@ -79,9 +69,7 @@
         .btn-edit:hover { background: #2563EB; }
         .btn-action { background: var(--success-color); color: white; }
         .btn-action:hover { background: #059669; }
-
-        /* NUEVOS ESTILOS PARA COLABORADORES INDIVIDUALES EN KPI */
-        .kpi-collabs-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); background-color: #fbfcfd; border-radius: 8px; padding: 12px; }
+        .kpi-collabs-section { margin-top: 16px; padding: 12px; border-top: 1px solid var(--border-color); background-color: #fbfcfd; border-radius: 8px; }
         .kpi-collabs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .kpi-collabs-title { font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
         .collab-individual-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; transition: all 200ms; }
@@ -94,9 +82,7 @@
         .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-tertiary); transition: color 200ms; border-radius: 4px; }
         .btn-icon:hover { color: var(--primary-color); background-color: rgba(31, 71, 136, 0.1); }
         .btn-icon.delete:hover { color: var(--danger-color); background-color: rgba(232, 93, 79, 0.1); }
-
-        /* ESTILOS PARA SECCIÓN DE ACCIONES */
-        .actions-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); background-color: #fef9f3; border-radius: 8px; padding: 12px; }
+        .actions-section { margin-top: 16px; padding: 12px; border-top: 1px solid var(--border-color); background-color: #fef9f3; border-radius: 8px; }
         .actions-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .actions-title { font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
         .action-item-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px; transition: all 200ms; }
@@ -109,15 +95,11 @@
         .btn-icon-action { background: none; border: none; cursor: pointer; padding: 4px 6px; color: var(--text-tertiary); transition: color 200ms; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
         .btn-icon-action:hover { color: var(--primary-color); background-color: rgba(31, 71, 136, 0.1); }
         .btn-icon-action.delete:hover { color: var(--danger-color); background-color: rgba(232, 93, 79, 0.1); }
-
-        /* Estilos de Modales Originales Actualizados */
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
         .modal.active { display: flex; }
-        .modal-content { background: var(--bg-card); border-radius: 12px; padding: 32px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: auto; position: relative;}
+        .modal-content { background: var(--bg-card); border-radius: 12px; padding: 32px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: auto; position: relative; }
         .modal-header { font-size: 20px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
         .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-secondary); padding: 0; position: absolute; top: 20px; right: 20px; }
-        
-        /* Formularios Originales */
         .form-group { margin-bottom: 20px; }
         .form-group label { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: inherit; }
@@ -128,1065 +110,885 @@
         .btn-cancel { background: var(--bg-light); color: var(--text-primary); }
         .btn-submit { background: var(--primary-color); color: white; }
         .btn-delete-modal { background: var(--danger-color); color: white; margin-right: auto; }
-
-        /* Selectores Especiales Originales */
         .type-selector, .period-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .type-option { padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; text-align: center; font-weight: 600; font-size: 12px; background: var(--bg-light); transition: all 200ms; color: var(--text-secondary); }
         .type-option:hover { border-color: var(--primary-color); color: var(--primary-color); }
         .type-option.selected { border-color: var(--success-color); background: rgba(6, 167, 125, 0.1); color: var(--success-color); }
-
-        /* Otros Originales */
         .alert { padding: 16px; border-radius: 8px; border-left: 4px solid; margin-bottom: 16px; font-size: 14px; }
         .alert.info { background: rgba(31, 71, 136, 0.1); border-color: var(--primary-color); color: var(--primary-color); }
         .empty-state { text-align: center; padding: 48px 20px; color: var(--text-tertiary); font-size: 14px; }
-        
-        /* Lista Maestra Colaboradores */
         .master-collab-list { margin-top: 15px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
         .master-collab-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--border-color); font-size: 13px; }
         .master-collab-item:last-child { border-bottom: none; }
-
-        /* Scrollbar Original */
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 15px; font-weight: 600; color: var(--primary-color); }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-light); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
-        <aside class="sidebar">
-            <div class="logo">
-                <span style="font-size: 28px;">📊</span>
-                <span>DomoNow</span>
-            </div>
-            <ul class="nav-menu">
-                <li class="nav-item"><a href="#" class="nav-link active" data-section="home"><span style="font-size: 18px;">🏠</span><span>Dashboard</span></a></li>
-                <li class="nav-item"><a href="#" class="nav-link" data-section="okrs"><span style="font-size: 18px;">🎯</span><span>OKRs</span></a></li>
-                <li class="nav-item"><a href="#" class="nav-link" data-section="kpis"><span style="font-size: 18px;">📈</span><span>KPIs</span></a></li>
-                <li class="nav-item"><a href="#" class="nav-link" data-section="acciones"><span style="font-size: 18px;">⚡</span><span>Acciones</span></a></li>
-            </ul>
-            <div style="position: absolute; bottom: 24px; left: 24px; right: 24px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">MC</div>
-                    <div style="color: rgba(255,255,255,0.9); font-size: 12px;">
-                        <div style="font-weight: 600;">Marco Carrasquilla</div>
-                        <div style="opacity: 0.8;">CEO</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
 
-        <main class="main-content">
-            <div class="header-bar">
-                <div class="header-title" id="pageTitle">📊 Dashboard por Área</div>
-                <div class="header-actions">
-                    <button class="action-btn info" id="manageCollabsBtn">👥 Colaboradores</button>
-                    <button class="action-btn success" id="addBtn">➕ Crear Indicador</button>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <span>Conectando con Supabase...</span>
+</div>
+
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="logo"><span style="font-size:28px">📊</span><span>DomoNow</span></div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="#" class="nav-link active" data-section="home"><span style="font-size:18px">🏠</span><span>Dashboard</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link" data-section="okrs"><span style="font-size:18px">🎯</span><span>OKRs</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link" data-section="kpis"><span style="font-size:18px">📈</span><span>KPIs</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link" data-section="acciones"><span style="font-size:18px">⚡</span><span>Acciones</span></a></li>
+        </ul>
+        <div style="position:absolute;bottom:24px;left:24px;right:24px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">MC</div>
+                <div style="color:rgba(255,255,255,0.9);font-size:12px;">
+                    <div style="font-weight:600;">Marco Carrasquilla</div>
+                    <div style="opacity:0.8;">CEO</div>
                 </div>
             </div>
+        </div>
+    </aside>
 
-            <div class="alert info">
-                <strong>📊 Gestión de Indicadores</strong> - Crea, edita y monitorea tus OKRs y KPIs por área y periodicidad. Asigna metas individuales en KPIs.
+    <main class="main-content">
+        <div class="header-bar">
+            <div class="header-title" id="pageTitle">📊 Dashboard por Área</div>
+            <div class="header-actions">
+                <button class="action-btn info" id="manageCollabsBtn">👥 Colaboradores</button>
+                <button class="action-btn success" id="addBtn">➕ Crear Indicador</button>
             </div>
+        </div>
+        <div class="alert info"><strong>📊 Gestión de Indicadores</strong> - Crea, edita y monitorea tus OKRs y KPIs por área y periodicidad. Asigna metas individuales en KPIs.</div>
 
-            <section id="home" class="section active">
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Área:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active" data-filter="area" data-value="all">📊 Todas</button>
-                        <button class="filter-btn" data-filter="area" data-value="fabrica">🏭 Fábrica</button>
-                        <button class="filter-btn" data-filter="area" data-value="marketing">📱 Marketing</button>
-                        <button class="filter-btn" data-filter="area" data-value="comercial">💼 Comercial</button>
-                        <button class="filter-btn" data-filter="area" data-value="servicio">🔧 Servicio</button>
-                    </div>
+        <section id="home" class="section active">
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="area" data-value="all">📊 Todas</button>
+                    <button class="filter-btn" data-filter="area" data-value="fabrica">🏭 Fábrica</button>
+                    <button class="filter-btn" data-filter="area" data-value="marketing">📱 Marketing</button>
+                    <button class="filter-btn" data-filter="area" data-value="comercial">💼 Comercial</button>
+                    <button class="filter-btn" data-filter="area" data-value="servicio">🔧 Servicio</button>
                 </div>
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Periodicidad:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active" data-filter="period" data-value="all">📅 Todos</button>
-                        <button class="filter-btn" data-filter="period" data-value="semanal">📆 Semanal</button>
-                        <button class="filter-btn" data-filter="period" data-value="quincenal">📋 Quincenal</button>
-                        <button class="filter-btn" data-filter="period" data-value="mensual">📊 Mensual</button>
-                    </div>
-                </div>
-                <div id="homeContent"></div>
-            </section>
-
-            <section id="okrs" class="section">
-                <h2 style="margin-bottom: 20px; color: var(--primary-color); font-size: 18px;">🎯 Objetivos y Resultados Clave (OKRs)</h2>
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Área:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active okr-area-filter" data-value="all">📊 Todas</button>
-                        <button class="filter-btn okr-area-filter" data-value="fabrica">🏭 Fábrica</button>
-                        <button class="filter-btn okr-area-filter" data-value="marketing">📱 Marketing</button>
-                        <button class="filter-btn okr-area-filter" data-value="comercial">💼 Comercial</button>
-                        <button class="filter-btn okr-area-filter" data-value="servicio">🔧 Servicio</button>
-                    </div>
-                </div>
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Periodicidad:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active okr-period-filter" data-value="all">📅 Todos</button>
-                        <button class="filter-btn okr-period-filter" data-value="semanal">📆 Semanal</button>
-                        <button class="filter-btn okr-period-filter" data-value="quincenal">📋 Quincenal</button>
-                        <button class="filter-btn okr-period-filter" data-value="mensual">📊 Mensual</button>
-                    </div>
-                </div>
-                <div id="okrsContent"></div>
-            </section>
-
-            <section id="kpis" class="section">
-                <h2 style="margin-bottom: 20px; color: var(--primary-color); font-size: 18px;">📈 Indicadores Clave de Rendimiento (KPIs)</h2>
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Área:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active kpi-area-filter" data-value="all">📊 Todas</button>
-                        <button class="filter-btn kpi-area-filter" data-value="fabrica">🏭 Fábrica</button>
-                        <button class="filter-btn kpi-area-filter" data-value="marketing">📱 Marketing</button>
-                        <button class="filter-btn kpi-area-filter" data-value="comercial">💼 Comercial</button>
-                        <button class="filter-btn kpi-area-filter" data-value="servicio">🔧 Servicio</button>
-                    </div>
-                </div>
-                <div class="filters-row">
-                    <strong style="width: 100%; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">Filtrar por Periodicidad:</strong>
-                    <div class="filter-group">
-                        <button class="filter-btn active kpi-period-filter" data-value="all">📅 Todos</button>
-                        <button class="filter-btn kpi-period-filter" data-value="semanal">📆 Semanal</button>
-                        <button class="filter-btn kpi-period-filter" data-value="quincenal">📋 Quincenal</button>
-                        <button class="filter-btn kpi-period-filter" data-value="mensual">📊 Mensual</button>
-                    </div>
-                </div>
-                <div id="kpisContent"></div>
-            </section>
-
-            <section id="acciones" class="section">
-                <h2 style="margin-bottom: 20px; color: var(--primary-color); font-size: 18px;">⚡ Seguimiento de Acciones</h2>
-                <div id="accionesContent"></div>
-            </section>
-        </main>
-    </div>
-
-    <div id="indicatorModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <div class="modal-header">
-                <span id="modalTitle">Crear Nuevo Indicador</span>
             </div>
-            <form id="indicatorForm">
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="period" data-value="all">📅 Todos</button>
+                    <button class="filter-btn" data-filter="period" data-value="semanal">📆 Semanal</button>
+                    <button class="filter-btn" data-filter="period" data-value="quincenal">📋 Quincenal</button>
+                    <button class="filter-btn" data-filter="period" data-value="mensual">📊 Mensual</button>
+                </div>
+            </div>
+            <div id="homeContent"></div>
+        </section>
+
+        <section id="okrs" class="section">
+            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">🎯 Objetivos y Resultados Clave (OKRs)</h2>
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active okr-area-filter" data-value="all">📊 Todas</button>
+                    <button class="filter-btn okr-area-filter" data-value="fabrica">🏭 Fábrica</button>
+                    <button class="filter-btn okr-area-filter" data-value="marketing">📱 Marketing</button>
+                    <button class="filter-btn okr-area-filter" data-value="comercial">💼 Comercial</button>
+                    <button class="filter-btn okr-area-filter" data-value="servicio">🔧 Servicio</button>
+                </div>
+            </div>
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active okr-period-filter" data-value="all">📅 Todos</button>
+                    <button class="filter-btn okr-period-filter" data-value="semanal">📆 Semanal</button>
+                    <button class="filter-btn okr-period-filter" data-value="quincenal">📋 Quincenal</button>
+                    <button class="filter-btn okr-period-filter" data-value="mensual">📊 Mensual</button>
+                </div>
+            </div>
+            <div id="okrsContent"></div>
+        </section>
+
+        <section id="kpis" class="section">
+            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">📈 Indicadores Clave de Rendimiento (KPIs)</h2>
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active kpi-area-filter" data-value="all">📊 Todas</button>
+                    <button class="filter-btn kpi-area-filter" data-value="fabrica">🏭 Fábrica</button>
+                    <button class="filter-btn kpi-area-filter" data-value="marketing">📱 Marketing</button>
+                    <button class="filter-btn kpi-area-filter" data-value="comercial">💼 Comercial</button>
+                    <button class="filter-btn kpi-area-filter" data-value="servicio">🔧 Servicio</button>
+                </div>
+            </div>
+            <div class="filters-row">
+                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
+                <div class="filter-group">
+                    <button class="filter-btn active kpi-period-filter" data-value="all">📅 Todos</button>
+                    <button class="filter-btn kpi-period-filter" data-value="semanal">📆 Semanal</button>
+                    <button class="filter-btn kpi-period-filter" data-value="quincenal">📋 Quincenal</button>
+                    <button class="filter-btn kpi-period-filter" data-value="mensual">📊 Mensual</button>
+                </div>
+            </div>
+            <div id="kpisContent"></div>
+        </section>
+
+        <section id="acciones" class="section">
+            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">⚡ Seguimiento de Acciones</h2>
+            <div id="accionesContent"></div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal Indicador -->
+<div id="indicatorModal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <div class="modal-header"><span id="modalTitle">Crear Nuevo Indicador</span></div>
+        <form id="indicatorForm">
+            <div class="form-group">
+                <label>Tipo de Indicador *</label>
+                <div class="type-selector">
+                    <div class="type-option" data-type="okr">🎯 OKR</div>
+                    <div class="type-option" data-type="kpi">📈 KPI</div>
+                </div>
+                <input type="hidden" id="indicatorType" required />
+            </div>
+            <div class="form-group"><label>Nombre *</label><input type="text" id="indicatorName" required /></div>
+            <div class="form-row">
                 <div class="form-group">
-                    <label>Tipo de Indicador *</label>
-                    <div class="type-selector">
-                        <div class="type-option" data-type="okr">🎯 OKR</div>
-                        <div class="type-option" data-type="kpi">📈 KPI</div>
-                    </div>
-                    <input type="hidden" id="indicatorType" required />
-                </div>
-                <div class="form-group"><label>Nombre *</label><input type="text" id="indicatorName" required /></div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Área *</label>
-                        <select id="indicatorArea" required>
-                            <option value="">-- Seleccionar --</option>
-                            <option value="fabrica">🏭 Fábrica</option>
-                            <option value="marketing">📱 Marketing</option>
-                            <option value="comercial">💼 Comercial</option>
-                            <option value="servicio">🔧 Servicio</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Meta *</label><input type="number" step="0.1" id="indicatorTarget" required /></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Unidad *</label>
-                        <select id="indicatorUnit" required>
-                            <option value="">-- Seleccionar --</option>
-                            <option>% (Porcentaje)</option><option>Días</option><option>Cantidad</option><option>Horas</option><option>/10 (Puntuación)</option><option>USD</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Valor Actual</label><input type="number" step="0.1" id="indicatorCurrent" /></div>
-                </div>
-                <div class="form-group">
-                    <label>Periodicidad *</label>
-                    <div class="period-selector">
-                        <div class="type-option" data-period="semanal">📆 Semanal</div>
-                        <div class="type-option" data-period="quincenal">📋 Quincenal</div>
-                        <div class="type-option" data-period="mensual">📊 Mensual</div>
-                    </div>
-                    <input type="hidden" id="indicatorPeriod" required />
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-delete-modal" id="deleteBtn" style="display: none;">🗑️ Eliminar</button>
-                    <button type="button" class="btn-cancel">Cancelar</button>
-                    <button type="submit" class="btn-submit">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="actionModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModalById('actionModal')">&times;</button>
-            <div class="modal-header">
-                <span>Agregar Acción a: <span id="actionIndicatorName"></span></span>
-            </div>
-            <form id="actionForm">
-                <input type="hidden" id="actionIndicatorId" />
-                <div class="form-group"><label>Descripción de la Acción *</label><textarea id="actionDescription" rows="3" required></textarea></div>
-                <div class="form-row">
-                    <div class="form-group"><label>Fecha *</label><input type="date" id="actionDate" required /></div>
-                    <div class="form-group">
-                        <label>Estado de Evolución *</label>
-                        <select id="actionStatus" required>
-                            <option value="">-- Seleccionar --</option>
-                            <option value="inicio">🔵 En Inicio</option>
-                            <option value="mejora">✅ Mejora</option>
-                            <option value="nomejora">❌ Sin Mejora</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group"><label>Responsable</label><input type="text" id="actionResponsible" /></div>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModalById('actionModal')">Cancelar</button>
-                    <button type="submit" class="btn-submit">Registrar Acción</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="masterCollabModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <div class="modal-header"><span>👥 Gestionar Equipo</span></div>
-            <div class="alert info" style="margin-bottom: 10px; padding: 10px;">Define aquí la lista maestra de colaboradores para luego asignarlos a KPIs.</div>
-            <form id="masterCollabForm" style="display: flex; gap: 8px;">
-                <input type="text" id="newCollabName" placeholder="Nombre completo del colaborador" required style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;">
-                <button type="submit" class="action-btn success" style="padding: 8px 12px;">Añadir</button>
-            </form>
-            <div class="master-collab-list" id="masterCollabList">
-                </div>
-            <div class="form-actions" style="margin-top: 15px; padding-top: 10px;">
-                <button type="button" class="btn-cancel" onclick="closeModalById('masterCollabModal')">Cerrar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="kpiAssignModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <button class="modal-close">&times;</button>
-            <div class="modal-header"><span id="kpiAssignTitle">Asignar Meta Individual</span></div>
-            <form id="kpiAssignForm">
-                <input type="hidden" id="assignKpiId">
-                <input type="hidden" id="assignEditIndex"> <div class="form-group">
-                    <label>Seleccionar Colaborador *</label>
-                    <select id="assignCollabSelect" required>
+                    <label>Área *</label>
+                    <select id="indicatorArea" required>
                         <option value="">-- Seleccionar --</option>
-                        </select>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Meta Individual *</label><input type="number" step="0.1" id="assignTarget" required></div>
-                    <div class="form-group"><label>Resultado Actual</label><input type="number" step="0.1" id="assignCurrent"></div>
-                </div>
-                <div class="form-actions" style="margin-top: 15px; padding-top: 10px;">
-                    <button type="button" class="btn-cancel" onclick="closeModalById('kpiAssignModal')">Cancelar</button>
-                    <button type="submit" class="btn-submit" id="btnAssignSubmit">Asignar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        /* SCRIPT ORIGINAL BASE */
-        let indicators = [];
-        let actions = [];
-        /* NUEVAS VARIABLES COLABORADORES */
-        let masterCollaborators = []; // Lista maestra de nombres
-        let kpiAssignments = {}; // Asignaciones individuales { kpiId: [{name, target, current}, ...] }
-        
-        let editingId = null;
-        let currentAreaFilter = 'all';
-        let currentPeriodFilter = 'all';
-        let okrAreaFilter = 'all';
-        let okrPeriodFilter = 'all';
-        let kpiAreaFilter = 'all';
-        let kpiPeriodFilter = 'all';
-
-        // DATOS BASE ORIGINALES EXACTOS
-        const OKRsBase = [
-            { id: 'okr-1', name: '10 PH en vivo con 80% de módulos', area: 'fabrica', period: 'mensual', target: 10, unit: 'PH', current: 7, type: 'okr' },
-            { id: 'okr-2', name: '60% infraestructura TI sistematizada', area: 'fabrica', period: 'mensual', target: 60, unit: '%', current: 60, type: 'okr' },
-            { id: 'okr-3', name: '60% pruebas QA automatizadas', area: 'fabrica', period: 'semanal', target: 60, unit: '%', current: 48, type: 'okr' },
-            { id: 'okr-4', name: '80% satisfacción software', area: 'fabrica', period: 'mensual', target: 80, unit: '%', current: 0, type: 'okr' },
-            { id: 'okr-5', name: 'Equipo capacitado al 90%', area: 'marketing', period: 'mensual', target: 90, unit: '%', current: 90, type: 'okr' },
-            { id: 'okr-6', name: '80% material comercial optimizado', area: 'marketing', period: 'mensual', target: 80, unit: '%', current: 72, type: 'okr' },
-            { id: 'okr-7', name: 'Plan de mercadeo diseñado al 90%', area: 'marketing', period: 'quincenal', target: 90, unit: '%', current: 85, type: 'okr' },
-            { id: 'okr-8', name: 'Equipo Ventas certificado al 90%', area: 'comercial', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' },
-            { id: 'okr-9', name: '10 socios de negocio reclutados', area: 'comercial', period: 'mensual', target: 10, unit: 'socios', current: 10, type: 'okr' },
-            { id: 'okr-10', name: '80% socios capacitados', area: 'comercial', period: 'semanal', target: 80, unit: '%', current: 64, type: 'okr' },
-            { id: 'okr-11', name: '20 propiedades cerradas', area: 'comercial', period: 'mensual', target: 20, unit: 'propiedades', current: 16, type: 'okr' },
-            { id: 'okr-12', name: 'Equipo Servicio certificado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 88, type: 'okr' },
-            { id: 'okr-13', name: '80% PH implementadas con adopción', area: 'servicio', period: 'semanal', target: 80, unit: '%', current: 72, type: 'okr' },
-            { id: 'okr-14', name: 'BPO definido y negociado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' }
-        ];
-
-        const KPIsBase = [
-            { id: 'kpi-1', name: 'Cobertura de módulos funcionales', area: 'fabrica', period: 'semanal', target: 95, unit: '%', current: 92, type: 'kpi' },
-            { id: 'kpi-2', name: 'Defectos encontrados en QA', area: 'fabrica', period: 'semanal', target: 5, unit: 'Cantidad', current: 3, type: 'kpi' },
-            { id: 'kpi-3', name: 'Ciclo de desarrollo', area: 'fabrica', period: 'semanal', target: 14, unit: 'Días', current: 12, type: 'kpi' },
-            { id: 'kpi-4', name: 'Leads generados', area: 'marketing', period: 'quincenal', target: 50, unit: 'Cantidad', current: 45, type: 'kpi' },
-            { id: 'kpi-5', name: 'Tasa de apertura', area: 'marketing', period: 'semanal', target: 35, unit: '%', current: 32, type: 'kpi' },
-            { id: 'kpi-6', name: 'Pipeline de oportunidades', area: 'comercial', period: 'mensual', target: 500000, unit: 'USD', current: 450000, type: 'kpi' },
-            { id: 'kpi-7', name: 'Tasa de cierre', area: 'comercial', period: 'mensual', target: 35, unit: '%', current: 32, type: 'kpi' },
-            { id: 'kpi-8', name: 'Ciclo de implementación', area: 'servicio', period: 'semanal', target: 45, unit: 'Días', current: 42, type: 'kpi' },
-            { id: 'kpi-9', name: 'Tasa entregas puntual', area: 'servicio', period: 'semanal', target: 90, unit: '%', current: 88, type: 'kpi' }
-        ];
-
-        // INICIALIZACIÓN ORIGINAL ACTUALIZADA
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            initializeNavigation();
-            initializeModals();
-            initializeFilters();
-            /* NUEVA INICIALIZACIÓN COLABORADORES */
-            initializeCollabManagement();
-            renderAllSections();
-        });
-
-        // LÓGICA ORIGINAL DE NAVEGACIÓN, FILTROS Y MODALES
-        function initializeNavigation() {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const section = this.getAttribute('data-section');
-                    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                    document.getElementById(section).classList.add('active');
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                    const titles = { 'home': '📊 Dashboard por Área', 'okrs': '🎯 Objetivos y Resultados Clave', 'kpis': '📈 Indicadores Clave', 'acciones': '⚡ Seguimiento de Acciones' };
-                    document.getElementById('pageTitle').textContent = titles[section];
-                });
-            });
-        }
-
-        function initializeFilters() {
-            // Home filters
-            document.querySelectorAll('[data-filter="area"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="area"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentAreaFilter = this.getAttribute('data-value'); renderHome(); }); });
-            document.querySelectorAll('[data-filter="period"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="period"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentPeriodFilter = this.getAttribute('data-value'); renderHome(); }); });
-            // OKRs filters
-            document.querySelectorAll('.okr-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrAreaFilter = this.getAttribute('data-value'); renderOKRs(); }); });
-            document.querySelectorAll('.okr-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrPeriodFilter = this.getAttribute('data-value'); renderOKRs(); }); });
-            // KPIs filters
-            document.querySelectorAll('.kpi-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiAreaFilter = this.getAttribute('data-value'); renderKPIs(); }); });
-            document.querySelectorAll('.kpi-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiPeriodFilter = this.getAttribute('data-value'); renderKPIs(); }); });
-        }
-
-        function initializeModals() {
-            document.getElementById('addBtn').addEventListener('click', () => { editingId = null; openIndicatorModal(); });
-            document.querySelectorAll('.modal-close, .btn-cancel').forEach(btn => { btn.addEventListener('click', function() { this.closest('.modal').classList.remove('active'); }); });
-            document.querySelectorAll('.type-selector .type-option').forEach(option => { option.addEventListener('click', function() { const type = this.getAttribute('data-type'); if (type) { document.querySelectorAll('.type-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorType').value = type; } }); });
-            document.querySelectorAll('.period-selector .type-option').forEach(option => { option.addEventListener('click', function() { const period = this.getAttribute('data-period'); if (period) { document.querySelectorAll('.period-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorPeriod').value = period; } }); });
-            document.getElementById('indicatorForm').addEventListener('submit', (e) => { e.preventDefault(); saveIndicator(); });
-            document.getElementById('deleteBtn').addEventListener('click', () => { if (confirm('¿Confirmas la eliminación?')) { indicators = indicators.filter(i => i.id !== editingId); localStorage.setItem('domonow_indicators', JSON.stringify(indicators)); document.getElementById('indicatorModal').classList.remove('active'); renderAllSections(); } });
-            document.getElementById('actionForm').addEventListener('submit', (e) => { e.preventDefault(); saveAction(); });
-            window.addEventListener('click', function(e) { if (e.target.classList.contains('modal')) { e.target.classList.remove('active'); } });
-        }
-
-        /* LÓGICA ORIGINAL DE INDICADORES Y ACCIONES */
-        function openIndicatorModal(indicator = null) {
-            editingId = indicator?.id || null;
-            const form = document.getElementById('indicatorForm');
-            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
-            if (indicator) {
-                document.getElementById('modalTitle').textContent = 'Editar Indicador';
-                document.getElementById('deleteBtn').style.display = 'block';
-                const typeOpt = document.querySelector(`.type-selector [data-type="${indicator.type}"]`);
-                if(typeOpt) typeOpt.classList.add('selected');
-                const periodOpt = document.querySelector(`.period-selector [data-period="${indicator.period}"]`);
-                if(periodOpt) periodOpt.classList.add('selected');
-                document.getElementById('indicatorType').value = indicator.type;
-                document.getElementById('indicatorName').value = indicator.name;
-                document.getElementById('indicatorArea').value = indicator.area;
-                document.getElementById('indicatorTarget').value = indicator.target;
-                document.getElementById('indicatorUnit').value = indicator.unit;
-                document.getElementById('indicatorCurrent').value = indicator.current || '';
-                document.getElementById('indicatorPeriod').value = indicator.period;
-            } else {
-                document.getElementById('modalTitle').textContent = 'Crear Nuevo Indicador';
-                document.getElementById('deleteBtn').style.display = 'none';
-                form.reset();
-            }
-            document.getElementById('indicatorModal').classList.add('active');
-        }
-
-        function saveIndicator() {
-            const type = document.getElementById('indicatorType').value;
-            const period = document.getElementById('indicatorPeriod').value;
-            if (!type || !period) { alert('Selecciona tipo y periodicidad'); return; }
-            const data = { id: editingId || `custom-${Date.now()}`, type, name: document.getElementById('indicatorName').value, area: document.getElementById('indicatorArea').value, target: parseFloat(document.getElementById('indicatorTarget').value), unit: document.getElementById('indicatorUnit').value, current: parseFloat(document.getElementById('indicatorCurrent').value) || 0, period };
-            
-            if (editingId) { 
-                // CORRECIÓN: Buscar en todos los arrays (OKRsBase, KPIsBase, indicators)
-                let found = false;
-                
-                // Buscar en OKRsBase
-                let index = OKRsBase.findIndex(i => i.id === editingId);
-                if (index !== -1) {
-                    OKRsBase[index] = data;
-                    localStorage.setItem('domonow_okrs', JSON.stringify(OKRsBase));
-                    found = true;
-                }
-                
-                // Buscar en KPIsBase
-                if (!found) {
-                    index = KPIsBase.findIndex(i => i.id === editingId);
-                    if (index !== -1) {
-                        KPIsBase[index] = data;
-                        localStorage.setItem('domonow_kpis', JSON.stringify(KPIsBase));
-                        found = true;
-                    }
-                }
-                
-                // Buscar en indicators (personalizados)
-                if (!found) {
-                    index = indicators.findIndex(i => i.id === editingId);
-                    if (index !== -1) {
-                        indicators[index] = data;
-                        localStorage.setItem('domonow_indicators', JSON.stringify(indicators));
-                        found = true;
-                    }
-                }
-                
-                if (!found) {
-                    alert('⚠️ No se encontró el indicador para actualizar');
-                    return;
-                }
-            } else { 
-                indicators.push(data);
-                localStorage.setItem('domonow_indicators', JSON.stringify(indicators));
-            }
-            
-            document.getElementById('indicatorModal').classList.remove('active');
-            renderAllSections();
-            alert('✅ Indicador actualizado exitosamente');
-        }
-
-        function openActionModal(indicatorId, indicatorName) {
-            document.getElementById('actionIndicatorId').value = indicatorId;
-            document.getElementById('actionIndicatorName').textContent = indicatorName;
-            document.getElementById('actionDate').valueAsDate = new Date();
-            document.getElementById('actionForm').reset();
-            document.getElementById('actionModal').classList.add('active');
-        }
-
-        function saveAction() {
-            const indicatorId = document.getElementById('actionIndicatorId').value;
-            const description = document.getElementById('actionDescription').value.trim();
-            const date = document.getElementById('actionDate').value;
-            const status = document.getElementById('actionStatus').value;
-            const responsible = document.getElementById('actionResponsible').value.trim();
-            
-            // Validaciones
-            if (!indicatorId) {
-                alert('⚠️ Falta el indicador. Por favor recarga la página.');
-                return;
-            }
-            if (!description) {
-                alert('⚠️ La descripción de la acción es obligatoria');
-                return;
-            }
-            if (!date) {
-                alert('⚠️ La fecha es obligatoria');
-                return;
-            }
-            if (!status) {
-                alert('⚠️ Debes seleccionar un estado de evolución');
-                return;
-            }
-            
-            // Crear la acción con todos los campos necesarios
-            const action = { 
-                id: Date.now(), 
-                indicatorId: indicatorId, 
-                title: description,  // Agregar title para compatibilidad
-                description: description, 
-                date: date, 
-                status: status, 
-                responsible: responsible || 'No asignado'
-            };
-            
-            actions.push(action);
-            localStorage.setItem('domonow_actions', JSON.stringify(actions));
-            document.getElementById('actionModal').classList.remove('active');
-            document.getElementById('actionForm').reset();
-            renderAllSections();
-            alert('✅ Acción registrada exitosamente');
-        }
-
-        /* LÓGICA ORIGINAL DE RENDERIZADO Y FILTROS */
-        function renderAllSections() { renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); }
-        function getFilteredIndicators(type = null, areaFilter = 'all', periodFilter = 'all') { const allIndicators = [ ...OKRsBase.map(o => ({ ...o, isBase: true })), ...KPIsBase.map(k => ({ ...k, isBase: true })), ...indicators ]; return allIndicators.filter(ind => { if (type && ind.type !== type) return false; if (areaFilter !== 'all' && ind.area !== areaFilter) return false; if (periodFilter !== 'all' && ind.period !== periodFilter) return false; return true; }); }
-        function renderHome() { const filtered = getFilteredIndicators(null, currentAreaFilter, currentPeriodFilter); const okrs = filtered.filter(i => i.type === 'okr'); const kpis = filtered.filter(i => i.type === 'kpi'); let html = ''; if (okrs.length > 0) { html += `<h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--okr-color); font-size: 16px;">🎯 OKRs (${okrs.length})</h3>`; okrs.forEach(ind => html += renderIndicatorCard(ind)); } if (kpis.length > 0) { html += `<h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--kpi-color); font-size: 16px;">📈 KPIs (${kpis.length})</h3>`; kpis.forEach(ind => html += renderIndicatorCard(ind)); } if (filtered.length === 0) { html = '<div class="empty-state">No hay indicadores para esta vista</div>'; } document.getElementById('homeContent').innerHTML = html; attachIndicatorEvents(); }
-        function renderOKRs() { const filtered = getFilteredIndicators('okr', okrAreaFilter, okrPeriodFilter); let html = ''; if (filtered.length === 0) { html = '<div class="empty-state">No hay OKRs para esta vista</div>'; } else { filtered.forEach(ind => html += renderIndicatorCard(ind)); } document.getElementById('okrsContent').innerHTML = html; attachIndicatorEvents(); }
-        function renderKPIs() { const filtered = getFilteredIndicators('kpi', kpiAreaFilter, kpiPeriodFilter); let html = ''; if (filtered.length === 0) { html = '<div class="empty-state">No hay KPIs para esta vista</div>'; } else { filtered.forEach(ind => html += renderIndicatorCard(ind)); } document.getElementById('kpisContent').innerHTML = html; attachIndicatorEvents(); }
-        function renderAcciones() { 
-            if (actions.length === 0) { 
-                document.getElementById('accionesContent').innerHTML = '<div class="empty-state">No hay acciones registradas</div>'; 
-                return; 
-            } 
-            let html = `<div class="card">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead style="text-align: left; color: var(--text-secondary);">
-                        <tr>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Indicador</th>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Descripción</th>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Responsable</th>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Fecha</th>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Estado</th>
-                            <th style="padding: 10px; border-bottom: 2px solid var(--border-color); text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>`; 
-            actions.forEach(action => { 
-                const statusEmoji = action.status === 'mejora' ? '✅' : action.status === 'inicio' ? '🔵' : '❌'; 
-                html += `<tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 10px;">${action.indicatorId}</td>
-                    <td style="padding: 10px;">${action.description || 'Sin descripción'}</td>
-                    <td style="padding: 10px;">${action.responsible || 'No asignado'}</td>
-                    <td style="padding: 10px;">${action.date ? new Date(action.date).toLocaleDateString('es-CO') : 'Sin fecha'}</td>
-                    <td style="padding: 10px;">${statusEmoji} ${action.status || 'Pendiente'}</td>
-                    <td style="padding: 10px; text-align: center;">
-                        <button class="btn-table-action view-action-table-btn" data-id="${action.id}" title="Ver acción" style="background: var(--info-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px;">👁️ Ver</button>
-                        <button class="btn-table-action edit-action-table-btn" data-id="${action.id}" title="Editar acción" style="background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px;">✏️ Editar</button>
-                        <button class="btn-table-action delete-action-table-btn" data-id="${action.id}" title="Eliminar acción" style="background: var(--danger-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">🗑️ Eliminar</button>
-                    </td>
-                </tr>`; 
-            }); 
-            html += '</tbody></table></div>'; 
-            document.getElementById('accionesContent').innerHTML = html;
-            
-            // Agregar event listeners a los botones de la tabla
-            attachActionTableEvents();
-        }
-
-        function attachActionTableEvents() {
-            // Ver acción desde tabla
-            document.querySelectorAll('.view-action-table-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const actionId = parseInt(this.getAttribute('data-id'));
-                    const action = actions.find(a => parseInt(a.id) === actionId);
-                    if(action) {
-                        showActionDetails(action);
-                    }
-                });
-            });
-
-            // Editar acción desde tabla
-            document.querySelectorAll('.edit-action-table-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const actionId = parseInt(this.getAttribute('data-id'));
-                    const action = actions.find(a => parseInt(a.id) === actionId);
-                    if(action) {
-                        openActionEditModal(action);
-                    }
-                });
-            });
-
-            // Eliminar acción desde tabla
-            document.querySelectorAll('.delete-action-table-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const actionId = parseInt(this.getAttribute('data-id'));
-                    deleteActionFromTable(actionId);
-                });
-            });
-        }
-
-        function deleteActionFromTable(actionId) {
-            if(confirm('¿Estás seguro de que deseas eliminar esta acción?')) {
-                actionId = parseInt(actionId);
-                actions = actions.filter(a => parseInt(a.id) !== actionId);
-                localStorage.setItem('domonow_actions', JSON.stringify(actions));
-                renderAllSections();
-                alert('✅ Acción eliminada');
-            }
-        }
-
-        // Carga de Datos Original
-        function loadData() {
-            const saved = localStorage.getItem('domonow_indicators');
-            const savedActions = localStorage.getItem('domonow_actions');
-            if (saved) indicators = JSON.parse(saved);
-            if (savedActions) actions = JSON.parse(savedActions);
-            
-            /* CARGA DE DATOS COLABORADORES */
-            const savedMaster = localStorage.getItem('domonow_masterCollabs');
-            const savedAssigns = localStorage.getItem('domonow_kpiAssigns');
-            if(savedMaster) masterCollaborators = JSON.parse(savedMaster);
-            if(savedAssigns) kpiAssignments = JSON.parse(savedAssigns);
-        }
-
-        /* ************************************************************ */
-        /* NUEVA LÓGICA: GESTIÓN DE COLABORADORES Y METAS INDIVIDUALES */
-        /* ************************************************************ */
-
-        function initializeCollabManagement() {
-            // Botón principal de la cabecera
-            document.getElementById('manageCollabsBtn').addEventListener('click', openMasterCollabModal);
-            
-            // Formulario lista maestra
-            document.getElementById('masterCollabForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const name = document.getElementById('newCollabName').value.trim();
-                if(name && !masterCollaborators.includes(name)) {
-                    masterCollaborators.push(name);
-                    localStorage.setItem('domonow_masterCollabs', JSON.stringify(masterCollaborators));
-                    document.getElementById('newCollabName').value = '';
-                    renderMasterCollabList();
-                } else if(masterCollaborators.includes(name)) {
-                    alert('Este colaborador ya existe.');
-                }
-            });
-
-            // Formulario asignar meta individual a KPI
-            document.getElementById('kpiAssignForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveKpiAssignment();
-            });
-        }
-
-        // Modal 1: Lista Maestra
-        function openMasterCollabModal() {
-            renderMasterCollabList();
-            document.getElementById('masterCollabModal').classList.add('active');
-        }
-
-        function renderMasterCollabList() {
-            const list = document.getElementById('masterCollabList');
-            if(masterCollaborators.length === 0) {
-                list.innerHTML = '<div style="padding: 15px; text-align:center; color: var(--text-tertiary); font-size: 12px;">No hay colaboradores registrados.</div>';
-                return;
-            }
-            let html = '';
-            masterCollaborators.forEach((name, index) => {
-                html += `
-                    <div class="master-collab-item">
-                        <span>${name}</span>
-                        <button class="btn-icon delete" onclick="deleteMasterCollab(${index})" title="Eliminar de la lista">✕</button>
-                    </div>
-                `;
-            });
-            list.innerHTML = html;
-        }
-
-        function deleteMasterCollab(index) {
-            if(confirm('¿Eliminar este colaborador de la lista maestra? No se borrarán sus asignaciones existentes en KPIs.')) {
-                masterCollaborators.splice(index, 1);
-                localStorage.setItem('domonow_masterCollabs', JSON.stringify(masterCollaborators));
-                renderMasterCollabList();
-            }
-        }
-
-        // Modal 2: Asignar a KPI específico
-        function openKpiAssignModal(kpiId, kpiName, collabEditIndex = null) {
-            document.getElementById('assignKpiId').value = kpiId;
-            document.getElementById('assignEditIndex').value = collabEditIndex !== null ? collabEditIndex : '';
-            document.getElementById('kpiAssignTitle').textContent = collabEditIndex !== null ? `Editar Meta Individual` : `Asignar a: ${kpiName}`;
-            document.getElementById('btnAssignSubmit').textContent = collabEditIndex !== null ? `Actualizar` : `Asignar`;
-
-            // Llenar selector de colaboradores desde lista maestra
-            const select = document.getElementById('assignCollabSelect');
-            select.innerHTML = '<option value="">-- Seleccionar --</option>';
-            masterCollaborators.forEach(name => {
-                select.innerHTML += `<option value="${name}">${name}</option>`;
-            });
-
-            const form = document.getElementById('kpiAssignForm');
-            form.reset();
-
-            // Modo edición
-            if(collabEditIndex !== null) {
-                const assignment = kpiAssignments[kpiId][collabEditIndex];
-                document.getElementById('assignCollabSelect').value = assignment.name;
-                // Deshabilitar selector en edición para no cambiar la persona
-                document.getElementById('assignCollabSelect').disabled = true; 
-                document.getElementById('assignTarget').value = assignment.target;
-                document.getElementById('assignCurrent').value = assignment.current || '';
-            } else {
-                document.getElementById('assignCollabSelect').disabled = false;
-            }
-
-            document.getElementById('kpiAssignModal').classList.add('active');
-        }
-
-        function saveKpiAssignment() {
-            const kpiId = document.getElementById('assignKpiId').value;
-            const editIndex = document.getElementById('assignEditIndex').value;
-            
-            const assignmentData = {
-                name: document.getElementById('assignCollabSelect').value,
-                target: parseFloat(document.getElementById('assignTarget').value),
-                current: parseFloat(document.getElementById('assignCurrent').value) || 0
-            };
-
-            if(!assignmentData.name) { alert('Selecciona un colaborador.'); return; }
-
-            if(!kpiAssignments[kpiId]) kpiAssignments[kpiId] = [];
-
-            if(editIndex !== '') {
-                // Actualizar existente
-                kpiAssignments[kpiId][editIndex] = assignmentData;
-            } else {
-                // Verificar si ya está asignado
-                const exists = kpiAssignments[kpiId].some(a => a.name === assignmentData.name);
-                if(exists) {
-                    alert('Este colaborador ya está asignado a este KPI. Edita su registro si necesitas cambiar las metas.');
-                    return;
-                }
-                // Añadir nuevo
-                kpiAssignments[kpiId].push(assignmentData);
-            }
-
-            localStorage.setItem('domonow_kpiAssigns', JSON.stringify(kpiAssignments));
-            closeModalById('kpiAssignModal');
-            renderAllSections(); // Recargar vistas
-        }
-
-        function deleteKpiAssignment(kpiId, index) {
-            if(confirm('¿Eliminar esta asignación individual?')) {
-                kpiAssignments[kpiId].splice(index, 1);
-                localStorage.setItem('domonow_kpiAssigns', JSON.stringify(kpiAssignments));
-                renderAllSections();
-            }
-        }
-
-        /* ************************************************************ */
-        /* MODIFICACIÓN DE RENDERIZADO PARA INCLUIR COLABORADORES EN KPI */
-        /* ************************************************************ */
-
-        function renderIndicatorCard(indicator) {
-            const pct = Math.min((indicator.current / indicator.target) * 100, 100);
-            const color = indicator.type === 'okr' ? '#8B5CF6' : '#06A77D';
-            
-            // Sección base de la tarjeta (común para OKR y KPI)
-            let cardHtml = `
-                <div class="indicator-card" data-id="${indicator.id}">
-                    <div class="indicator-header">
-                        <div>
-                            <div class="indicator-badges">
-                                <span class="badge ${indicator.type}">${indicator.type.toUpperCase()}</span>
-                                <span class="badge period">${indicator.period}</span>
-                            </div>
-                            <div class="indicator-title">${indicator.name}</div>
-                            <div class="indicator-meta">${indicator.current}/${indicator.target} ${indicator.unit}</div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${pct}%; background: ${color};"></div>
-                    </div>
-                    <div class="progress-text">${Math.round(pct)}% de progreso</div>
-            `;
-
-            // NUEVA LÓGICA: INSERTAR SECCIÓN DE COLABORADORES INDIVIDUALES SOLO SI ES KPI
-            if(indicator.type === 'kpi') {
-                const assigns = kpiAssignments[indicator.id] || [];
-                cardHtml += `
-                    <div class="kpi-collabs-section">
-                        <div class="kpi-collabs-header">
-                            <span class="kpi-collabs-title">👤 Desempeño Individual</span>
-                            <button class="btn-small info assign-collab-btn" 
-                                    style="padding: 4px 8px; font-size: 11px;"
-                                    data-id="${indicator.id}" 
-                                    data-name="${indicator.name}"
-                                    title="Asignar colaborador con meta individual a este KPI">
-                                + Asignar
-                            </button>
-                        </div>
-                        <div class="kpi-collabs-list">
-                            ${assigns.length === 0 ? 
-                                `<div style="font-size: 11px; color: var(--text-tertiary); text-align:center; padding: 5px;">Sin asignaciones individuales</div>` 
-                                : 
-                                assigns.map((assign, index) => {
-                                    const indivPct = assign.target > 0 ? Math.round((assign.current / assign.target) * 100) : 0;
-                                    return `
-                                        <div class="collab-individual-card">
-                                            <div class="collab-indiv-info">
-                                                <div class="collab-indiv-name">${assign.name}</div>
-                                                <div class="collab-indiv-meta">${assign.current} / ${assign.target}</div>
-                                            </div>
-                                            <div class="collab-indiv-performance">
-                                                <span class="collab-indiv-pct">${indivPct}%</span>
-                                                <div style="display:flex; flex-direction:column; gap:2px">
-                                                    <button class="btn-icon edit-indiv-btn" 
-                                                            data-kpiid="${indicator.id}" 
-                                                            data-kpiname="${indicator.name}"
-                                                            data-index="${index}" title="Editar meta/resultado">✏️</button>
-                                                    <button class="btn-icon delete delete-indiv-btn" 
-                                                            data-kpiid="${indicator.id}" 
-                                                            data-index="${index}" title="Eliminar asignación">✕</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')
-                            }
-                        </div>
-                    </div>
-                `;
-            }
-
-            // NUEVA SECCIÓN: ACCIONES RELACIONADAS CON RESPONSABLE VISIBLE
-            const relatedActions = actions.filter(action => action.indicatorId === indicator.id);
-            if(relatedActions.length > 0) {
-                cardHtml += `
-                    <div class="actions-section">
-                        <div class="actions-header">
-                            <span class="actions-title">⚡ Acciones (${relatedActions.length})</span>
-                        </div>
-                        <div class="actions-list">
-                            ${relatedActions.map((action, index) => `
-                                <div class="action-item-card">
-                                    <div class="action-item-info">
-                                        <div class="action-item-title">${action.title}</div>
-                                        <div class="action-item-meta">Fecha: ${action.date || 'Sin fecha'}</div>
-                                        <div class="action-item-responsible">👤 Responsable: ${action.responsible || 'No asignado'}</div>
-                                    </div>
-                                    <div class="action-item-actions">
-                                        <button class="btn-icon-action view-action-btn" 
-                                                data-id="${action.id}" 
-                                                title="Ver acción">👁️ Ver</button>
-                                        <button class="btn-icon-action edit-action-btn" 
-                                                data-id="${action.id}" 
-                                                title="Editar acción">✏️ Editar</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Acciones de pie de tarjeta (comunes)
-            cardHtml += `
-                    <div class="indicator-actions">
-                        <button class="btn-small btn-edit" data-id="${indicator.id}">✏️ Editar</button>
-                        <button class="btn-small btn-action" data-id="${indicator.id}">⚡ Agregar Acción</button>
-                    </div>
-                </div>
-            `;
-            return cardHtml;
-        }
-
-        // Actualización de attachEvents Original para incluir los nuevos botones
-        function attachIndicatorEvents() {
-            // Eventos originales
-            document.querySelectorAll('.btn-edit').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [ ...OKRsBase, ...KPIsBase, ...indicators ].find(i => i.id === id); if (indicator) openIndicatorModal(indicator); }); });
-            document.querySelectorAll('.btn-action').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [ ...OKRsBase, ...KPIsBase, ...indicators ].find(i => i.id === id); if (indicator) openActionModal(id, indicator.name); }); });
-
-            // NUEVOS EVENTOS COLABORADORES INDIVIDUALES
-            // Botón + Asignar en cabecera de sección individual
-            document.querySelectorAll('.assign-collab-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if(masterCollaborators.length === 0) {
-                        alert('Primero debes agregar colaboradores en la lista maestra (botón 👥 Colaboradores en la parte superior).');
-                        return;
-                    }
-                    const id = this.getAttribute('data-id');
-                    const name = this.getAttribute('data-name');
-                    openKpiAssignModal(id, name);
-                });
-            });
-
-            // Botón editar individual (lapiz)
-            document.querySelectorAll('.edit-indiv-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const kpiId = this.getAttribute('data-kpiid');
-                    const kpiName = this.getAttribute('data-kpiname');
-                    const index = this.getAttribute('data-index');
-                    openKpiAssignModal(kpiId, kpiName, index);
-                });
-            });
-
-            // Botón eliminar individual (X)
-            document.querySelectorAll('.delete-indiv-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const kpiId = this.getAttribute('data-kpiid');
-                    const index = this.getAttribute('data-index');
-                    deleteKpiAssignment(kpiId, index);
-                });
-            });
-
-            // NUEVOS EVENTOS PARA ACCIONES
-            // Botón ver acción
-            document.querySelectorAll('.view-action-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const actionId = this.getAttribute('data-id');
-                    const action = actions.find(a => a.id === actionId);
-                    if(action) {
-                        showActionDetails(action);
-                    }
-                });
-            });
-
-            // Botón editar acción
-            document.querySelectorAll('.edit-action-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const actionId = this.getAttribute('data-id');
-                    const action = actions.find(a => a.id === actionId);
-                    if(action) {
-                        openActionEditModal(action);
-                    }
-                });
-            });
-        }
-
-        // Helper para cerrar modales específicos
-        function closeModalById(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        // NUEVAS FUNCIONES PARA ACCIONES
-        // Mostrar detalles de una acción en un modal read-only
-        function showActionDetails(action) {
-            const modalContent = document.querySelector('#actionModal .modal-content');
-            const indicator = [ ...OKRsBase, ...KPIsBase, ...indicators ].find(i => i.id === action.indicatorId);
-            const indicatorName = indicator ? indicator.name : 'Sin indicador';
-            
-            modalContent.innerHTML = `
-                <button class="modal-close" onclick="closeModalById('actionModal')">×</button>
-                <div class="modal-header">
-                    <span>📋 Detalles de la Acción - ${indicatorName}</span>
-                </div>
-                <div class="form-group">
-                    <label>Acción</label>
-                    <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary);">${action.title || action.description || 'Sin descripción'}</div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Responsable</label>
-                        <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary);">${action.responsible || 'No asignado'}</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha Límite</label>
-                        <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary);">${action.date || 'Sin fecha'}</div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>KPI Relacionado</label>
-                    <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 600;">${indicatorName}</div>
-                </div>
-                <div class="form-group">
-                    <label>Estado</label>
-                    <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary);">${action.status || 'Pendiente'}</div>
-                </div>
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button class="action-btn" onclick="editActionFromDetails('${action.id}')" type="button">✏️ Editar Acción</button>
-                    <button class="action-btn" style="background: var(--text-secondary);" onclick="closeModalById('actionModal')" type="button">Cerrar</button>
-                </div>
-            `;
-            document.getElementById('actionModal').classList.add('active');
-        }
-
-        // Función para pasar de detalles a edición
-        function editActionFromDetails(actionId) {
-            actionId = parseInt(actionId);
-            const action = actions.find(a => parseInt(a.id) === actionId);
-            if(action) {
-                openActionEditModal(action);
-            }
-        }
-
-        // Modal para editar acción (similar a como se editan colaboradores)
-        function openActionEditModal(action) {
-            const indicator = [ ...OKRsBase, ...KPIsBase, ...indicators ].find(i => i.id === action.indicatorId);
-            const modalContent = document.querySelector('#actionModal .modal-content');
-            const indicatorName = indicator ? indicator.name : 'Sin indicador';
-            
-            modalContent.innerHTML = `
-                <button class="modal-close" onclick="closeModalById('actionModal')">×</button>
-                <div class="modal-header">
-                    <span>✏️ Editar Acción - ${indicatorName}</span>
-                </div>
-                <div class="form-group">
-                    <label>Acción *</label>
-                    <input type="text" id="editActionTitle" value="${action.title || action.description || ''}" placeholder="Descripción de la acción">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Responsable</label>
-                        <select id="editActionResponsible">
-                            <option value="">Seleccionar responsable</option>
-                            ${masterCollaborators.map(c => `<option value="${c}" ${action.responsible === c ? 'selected' : ''}>${c}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha Límite</label>
-                        <input type="date" id="editActionDate" value="${action.date || ''}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Estado</label>
-                    <select id="editActionStatus">
-                        <option value="mejora" ${action.status === 'mejora' ? 'selected' : ''}>✅ Mejora</option>
-                        <option value="inicio" ${action.status === 'inicio' ? 'selected' : ''}>🔵 Inicio</option>
-                        <option value="no-logrado" ${action.status === 'no-logrado' ? 'selected' : ''}>❌ No Logrado</option>
-                        <option value="Pendiente" ${action.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                        <option value="En Progreso" ${action.status === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
-                        <option value="Completada" ${action.status === 'Completada' ? 'selected' : ''}>Completada</option>
+                        <option value="fabrica">🏭 Fábrica</option>
+                        <option value="marketing">📱 Marketing</option>
+                        <option value="comercial">💼 Comercial</option>
+                        <option value="servicio">🔧 Servicio</option>
                     </select>
                 </div>
+                <div class="form-group"><label>Meta *</label><input type="number" step="0.1" id="indicatorTarget" required /></div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
-                    <label>KPI Relacionado</label>
-                    <div style="padding: 10px 12px; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 600;">${indicatorName}</div>
+                    <label>Unidad *</label>
+                    <select id="indicatorUnit" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option>% (Porcentaje)</option><option>Días</option><option>Cantidad</option><option>Horas</option><option>/10 (Puntuación)</option><option>USD</option>
+                    </select>
                 </div>
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button class="action-btn success" onclick="saveActionEdit('${action.id}')" type="button">💾 Guardar Cambios</button>
-                    <button class="action-btn" style="background: var(--danger-color);" onclick="deleteAction('${action.id}')" type="button">🗑️ Eliminar Acción</button>
-                    <button class="action-btn" style="background: var(--text-secondary);" onclick="closeModalById('actionModal')" type="button">Cancelar</button>
+                <div class="form-group"><label>Valor Actual</label><input type="number" step="0.1" id="indicatorCurrent" /></div>
+            </div>
+            <div class="form-group">
+                <label>Periodicidad *</label>
+                <div class="period-selector">
+                    <div class="type-option" data-period="semanal">📆 Semanal</div>
+                    <div class="type-option" data-period="quincenal">📋 Quincenal</div>
+                    <div class="type-option" data-period="mensual">📊 Mensual</div>
                 </div>
-            `;
-            document.getElementById('actionModal').classList.add('active');
-        }
+                <input type="hidden" id="indicatorPeriod" required />
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-delete-modal" id="deleteBtn" style="display:none;">🗑️ Eliminar</button>
+                <button type="button" class="btn-cancel">Cancelar</button>
+                <button type="submit" class="btn-submit">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        // Guardar cambios en acción
-        function saveActionEdit(actionId) {
-            // Convertir a número para comparación correcta
-            actionId = parseInt(actionId);
-            const actionIndex = actions.findIndex(a => parseInt(a.id) === actionId);
-            
-            if(actionIndex !== -1) {
-                const titleValue = document.getElementById('editActionTitle').value.trim();
-                
-                if(titleValue === '') {
-                    alert('El título de la acción no puede estar vacío');
-                    return;
-                }
-                
-                actions[actionIndex].title = titleValue;
-                actions[actionIndex].description = titleValue; // Sincronizar con description
-                actions[actionIndex].responsible = document.getElementById('editActionResponsible').value;
-                actions[actionIndex].date = document.getElementById('editActionDate').value;
-                actions[actionIndex].status = document.getElementById('editActionStatus').value;
-                
-                // Guardar en localStorage
-                localStorage.setItem('domonow_actions', JSON.stringify(actions));
-                
-                closeModalById('actionModal');
-                renderAllSections();
-                alert('✅ Acción actualizada exitosamente');
-            } else {
-                alert('⚠️ No se encontró la acción para actualizar');
-            }
-        }
+<!-- Modal Acción -->
+<div id="actionModal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModalById('actionModal')">&times;</button>
+        <div class="modal-header"><span>Agregar Acción a: <span id="actionIndicatorName"></span></span></div>
+        <form id="actionForm">
+            <input type="hidden" id="actionIndicatorId" />
+            <div class="form-group"><label>Descripción de la Acción *</label><textarea id="actionDescription" rows="3" required></textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>Fecha *</label><input type="date" id="actionDate" required /></div>
+                <div class="form-group">
+                    <label>Estado de Evolución *</label>
+                    <select id="actionStatus" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="inicio">🔵 En Inicio</option>
+                        <option value="mejora">✅ Mejora</option>
+                        <option value="nomejora">❌ Sin Mejora</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Responsable</label><input type="text" id="actionResponsible" /></div>
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModalById('actionModal')">Cancelar</button>
+                <button type="submit" class="btn-submit">Registrar Acción</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        // Eliminar acción
-        function deleteAction(actionId) {
-            if(confirm('¿Estás seguro de que deseas eliminar esta acción?')) {
-                actionId = parseInt(actionId);
-                actions = actions.filter(a => parseInt(a.id) !== actionId);
-                localStorage.setItem('domonow_actions', JSON.stringify(actions));
-                closeModalById('actionModal');
-                renderAllSections();
-                alert('✅ Acción eliminada');
-            }
+<!-- Modal Colaboradores Maestro -->
+<div id="masterCollabModal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <div class="modal-header"><span>👥 Gestionar Equipo</span></div>
+        <div class="alert info" style="margin-bottom:10px;padding:10px;">Define aquí la lista maestra de colaboradores para luego asignarlos a KPIs.</div>
+        <form id="masterCollabForm" style="display:flex;gap:8px;">
+            <input type="text" id="newCollabName" placeholder="Nombre completo del colaborador" required style="flex:1;padding:8px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+            <button type="submit" class="action-btn success" style="padding:8px 12px;">Añadir</button>
+        </form>
+        <div class="master-collab-list" id="masterCollabList"></div>
+        <div class="form-actions" style="margin-top:15px;padding-top:10px;">
+            <button type="button" class="btn-cancel" onclick="closeModalById('masterCollabModal')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar KPI -->
+<div id="kpiAssignModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+        <button class="modal-close">&times;</button>
+        <div class="modal-header"><span id="kpiAssignTitle">Asignar Meta Individual</span></div>
+        <form id="kpiAssignForm">
+            <input type="hidden" id="assignKpiId">
+            <input type="hidden" id="assignEditIndex">
+            <div class="form-group">
+                <label>Seleccionar Colaborador *</label>
+                <select id="assignCollabSelect" required><option value="">-- Seleccionar --</option></select>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Meta Individual *</label><input type="number" step="0.1" id="assignTarget" required></div>
+                <div class="form-group"><label>Resultado Actual</label><input type="number" step="0.1" id="assignCurrent"></div>
+            </div>
+            <div class="form-actions" style="margin-top:15px;padding-top:10px;">
+                <button type="button" class="btn-cancel" onclick="closeModalById('kpiAssignModal')">Cancelar</button>
+                <button type="submit" class="btn-submit" id="btnAssignSubmit">Asignar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// SUPABASE — credenciales hardcodeadas
+// ══════════════════════════════════════════════
+const SB_URL = 'https://shxtjywgecluhppkypit.supabase.co';
+const SB_KEY = 'sb_publishable_BpasnmRGD1Z5Kqps8o60Zw_k4iZS_ZW';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ══════════════════════════════════════════════
+// ESTADO EN MEMORIA (sin localStorage)
+// ══════════════════════════════════════════════
+let indicators = [];
+let actions = [];
+let masterCollaborators = [];
+let kpiAssignments = {};
+let editingId = null;
+let currentAreaFilter = 'all';
+let currentPeriodFilter = 'all';
+let okrAreaFilter = 'all';
+let okrPeriodFilter = 'all';
+let kpiAreaFilter = 'all';
+let kpiPeriodFilter = 'all';
+
+// Datos base (siempre en memoria, no en DB — son los OKRs/KPIs predefinidos)
+const OKRsBase = [
+    { id: 'okr-1', name: '10 PH en vivo con 80% de módulos', area: 'fabrica', period: 'mensual', target: 10, unit: 'PH', current: 7, type: 'okr' },
+    { id: 'okr-2', name: '60% infraestructura TI sistematizada', area: 'fabrica', period: 'mensual', target: 60, unit: '%', current: 60, type: 'okr' },
+    { id: 'okr-3', name: '60% pruebas QA automatizadas', area: 'fabrica', period: 'semanal', target: 60, unit: '%', current: 48, type: 'okr' },
+    { id: 'okr-4', name: '80% satisfacción software', area: 'fabrica', period: 'mensual', target: 80, unit: '%', current: 0, type: 'okr' },
+    { id: 'okr-5', name: 'Equipo capacitado al 90%', area: 'marketing', period: 'mensual', target: 90, unit: '%', current: 90, type: 'okr' },
+    { id: 'okr-6', name: '80% material comercial optimizado', area: 'marketing', period: 'mensual', target: 80, unit: '%', current: 72, type: 'okr' },
+    { id: 'okr-7', name: 'Plan de mercadeo diseñado al 90%', area: 'marketing', period: 'quincenal', target: 90, unit: '%', current: 85, type: 'okr' },
+    { id: 'okr-8', name: 'Equipo Ventas certificado al 90%', area: 'comercial', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' },
+    { id: 'okr-9', name: '10 socios de negocio reclutados', area: 'comercial', period: 'mensual', target: 10, unit: 'socios', current: 10, type: 'okr' },
+    { id: 'okr-10', name: '80% socios capacitados', area: 'comercial', period: 'semanal', target: 80, unit: '%', current: 64, type: 'okr' },
+    { id: 'okr-11', name: '20 propiedades cerradas', area: 'comercial', period: 'mensual', target: 20, unit: 'propiedades', current: 16, type: 'okr' },
+    { id: 'okr-12', name: 'Equipo Servicio certificado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 88, type: 'okr' },
+    { id: 'okr-13', name: '80% PH implementadas con adopción', area: 'servicio', period: 'semanal', target: 80, unit: '%', current: 72, type: 'okr' },
+    { id: 'okr-14', name: 'BPO definido y negociado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' }
+];
+const KPIsBase = [
+    { id: 'kpi-1', name: 'Cobertura de módulos funcionales', area: 'fabrica', period: 'semanal', target: 95, unit: '%', current: 92, type: 'kpi' },
+    { id: 'kpi-2', name: 'Defectos encontrados en QA', area: 'fabrica', period: 'semanal', target: 5, unit: 'Cantidad', current: 3, type: 'kpi' },
+    { id: 'kpi-3', name: 'Ciclo de desarrollo', area: 'fabrica', period: 'semanal', target: 14, unit: 'Días', current: 12, type: 'kpi' },
+    { id: 'kpi-4', name: 'Leads generados', area: 'marketing', period: 'quincenal', target: 50, unit: 'Cantidad', current: 45, type: 'kpi' },
+    { id: 'kpi-5', name: 'Tasa de apertura', area: 'marketing', period: 'semanal', target: 35, unit: '%', current: 32, type: 'kpi' },
+    { id: 'kpi-6', name: 'Pipeline de oportunidades', area: 'comercial', period: 'mensual', target: 500000, unit: 'USD', current: 450000, type: 'kpi' },
+    { id: 'kpi-7', name: 'Tasa de cierre', area: 'comercial', period: 'mensual', target: 35, unit: '%', current: 32, type: 'kpi' },
+    { id: 'kpi-8', name: 'Ciclo de implementación', area: 'servicio', period: 'semanal', target: 45, unit: 'Días', current: 42, type: 'kpi' },
+    { id: 'kpi-9', name: 'Tasa entregas puntual', area: 'servicio', period: 'semanal', target: 90, unit: '%', current: 88, type: 'kpi' }
+];
+
+// ══════════════════════════════════════════════
+// SUPABASE: CARGAR DATOS
+// ══════════════════════════════════════════════
+async function loadAllFromSupabase() {
+    try {
+        const [indRes, actRes, collabRes, assignRes] = await Promise.all([
+            sb.from('kpi_indicators').select('*'),
+            sb.from('kpi_actions').select('*'),
+            sb.from('kpi_collaborators').select('*'),
+            sb.from('kpi_assignments').select('*')
+        ]);
+        indicators = (indRes.data || []).map(r => ({
+            id: r.id, type: r.type, name: r.name, area: r.area,
+            target: r.target, unit: r.unit, current: r.current, period: r.period
+        }));
+        actions = (actRes.data || []).map(r => ({
+            id: r.id, indicatorId: r.indicator_id, title: r.title,
+            description: r.title, date: r.date, status: r.status, responsible: r.responsible
+        }));
+        masterCollaborators = (collabRes.data || []).map(r => r.name);
+        kpiAssignments = {};
+        (assignRes.data || []).forEach(r => {
+            if (!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id] = [];
+            kpiAssignments[r.kpi_id].push({ id: r.id, name: r.collab_name, target: r.target, current: r.current });
+        });
+    } catch(e) {
+        console.error('Error cargando datos:', e);
+    }
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE: GUARDAR INDICADOR
+// ══════════════════════════════════════════════
+async function saveIndicatorToDB(data) {
+    if (editingId) {
+        // Buscar si es de base o personalizado
+        const isBase = [...OKRsBase, ...KPIsBase].some(i => i.id === editingId);
+        if (isBase) {
+            // Actualizar el objeto base en memoria
+            const baseArr = data.type === 'okr' ? OKRsBase : KPIsBase;
+            const idx = baseArr.findIndex(i => i.id === editingId);
+            if (idx !== -1) { baseArr[idx] = { ...baseArr[idx], ...data }; }
+            return true;
+        } else {
+            // Actualizar en Supabase
+            const { error } = await sb.from('kpi_indicators').update({
+                type: data.type, name: data.name, area: data.area,
+                target: data.target, unit: data.unit, current: data.current, period: data.period
+            }).eq('id', editingId);
+            if (error) { alert('Error: ' + error.message); return false; }
+            const idx = indicators.findIndex(i => i.id === editingId);
+            if (idx !== -1) indicators[idx] = data;
+            return true;
         }
-    </script>
+    } else {
+        const { data: saved, error } = await sb.from('kpi_indicators').insert({
+            type: data.type, name: data.name, area: data.area,
+            target: data.target, unit: data.unit, current: data.current, period: data.period
+        }).select().single();
+        if (error) { alert('Error: ' + error.message); return false; }
+        indicators.push({ ...data, id: saved.id });
+        return true;
+    }
+}
+
+async function deleteIndicatorFromDB(id) {
+    const isBase = [...OKRsBase, ...KPIsBase].some(i => i.id === id);
+    if (isBase) { alert('No se pueden eliminar indicadores base.'); return false; }
+    const { error } = await sb.from('kpi_indicators').delete().eq('id', id);
+    if (error) { alert('Error: ' + error.message); return false; }
+    indicators = indicators.filter(i => i.id !== id);
+    return true;
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE: GUARDAR ACCIÓN
+// ══════════════════════════════════════════════
+async function saveActionToDB(actionData) {
+    const { data: saved, error } = await sb.from('kpi_actions').insert({
+        indicator_id: actionData.indicatorId,
+        title: actionData.description,
+        date: actionData.date,
+        status: actionData.status,
+        responsible: actionData.responsible
+    }).select().single();
+    if (error) { alert('Error: ' + error.message); return false; }
+    actions.push({ ...actionData, id: saved.id, title: actionData.description });
+    return true;
+}
+
+async function updateActionInDB(actionId, data) {
+    const { error } = await sb.from('kpi_actions').update({
+        title: data.title, date: data.date, status: data.status, responsible: data.responsible
+    }).eq('id', actionId);
+    if (error) { alert('Error: ' + error.message); return false; }
+    const idx = actions.findIndex(a => a.id == actionId);
+    if (idx !== -1) { actions[idx] = { ...actions[idx], ...data, description: data.title }; }
+    return true;
+}
+
+async function deleteActionFromDB(actionId) {
+    const { error } = await sb.from('kpi_actions').delete().eq('id', actionId);
+    if (error) { alert('Error: ' + error.message); return false; }
+    actions = actions.filter(a => a.id != actionId);
+    return true;
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE: COLABORADORES
+// ══════════════════════════════════════════════
+async function saveCollabToDB(name) {
+    const { error } = await sb.from('kpi_collaborators').insert({ name });
+    if (error) { alert('Error: ' + error.message); return false; }
+    masterCollaborators.push(name);
+    return true;
+}
+
+async function deleteCollabFromDB(name) {
+    const { error } = await sb.from('kpi_collaborators').delete().eq('name', name);
+    if (error) { alert('Error: ' + error.message); return false; }
+    masterCollaborators = masterCollaborators.filter(c => c !== name);
+    return true;
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE: ASIGNACIONES KPI
+// ══════════════════════════════════════════════
+async function saveAssignmentToDB(kpiId, assignData) {
+    const { data: saved, error } = await sb.from('kpi_assignments').insert({
+        kpi_id: kpiId, collab_name: assignData.name,
+        target: assignData.target, current: assignData.current
+    }).select().single();
+    if (error) { alert('Error: ' + error.message); return false; }
+    if (!kpiAssignments[kpiId]) kpiAssignments[kpiId] = [];
+    kpiAssignments[kpiId].push({ ...assignData, id: saved.id });
+    return true;
+}
+
+async function updateAssignmentInDB(assignId, data) {
+    const { error } = await sb.from('kpi_assignments').update({
+        target: data.target, current: data.current
+    }).eq('id', assignId);
+    if (error) { alert('Error: ' + error.message); return false; }
+    return true;
+}
+
+async function deleteAssignmentFromDB(kpiId, index) {
+    const assign = kpiAssignments[kpiId][index];
+    if (!assign) return false;
+    const { error } = await sb.from('kpi_assignments').delete().eq('id', assign.id);
+    if (error) { alert('Error: ' + error.message); return false; }
+    kpiAssignments[kpiId].splice(index, 1);
+    return true;
+}
+
+// ══════════════════════════════════════════════
+// INICIALIZACIÓN
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadAllFromSupabase();
+    document.getElementById('loadingOverlay').style.display = 'none';
+    initializeNavigation();
+    initializeModals();
+    initializeFilters();
+    initializeCollabManagement();
+    renderAllSections();
+});
+
+function initializeNavigation() {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            const titles = { home: '📊 Dashboard por Área', okrs: '🎯 Objetivos y Resultados Clave', kpis: '📈 Indicadores Clave', acciones: '⚡ Seguimiento de Acciones' };
+            document.getElementById('pageTitle').textContent = titles[section];
+        });
+    });
+}
+
+function initializeFilters() {
+    document.querySelectorAll('[data-filter="area"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="area"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentAreaFilter = this.getAttribute('data-value'); renderHome(); }); });
+    document.querySelectorAll('[data-filter="period"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="period"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentPeriodFilter = this.getAttribute('data-value'); renderHome(); }); });
+    document.querySelectorAll('.okr-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrAreaFilter = this.getAttribute('data-value'); renderOKRs(); }); });
+    document.querySelectorAll('.okr-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrPeriodFilter = this.getAttribute('data-value'); renderOKRs(); }); });
+    document.querySelectorAll('.kpi-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiAreaFilter = this.getAttribute('data-value'); renderKPIs(); }); });
+    document.querySelectorAll('.kpi-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiPeriodFilter = this.getAttribute('data-value'); renderKPIs(); }); });
+}
+
+function initializeModals() {
+    document.getElementById('addBtn').addEventListener('click', () => { editingId = null; openIndicatorModal(); });
+    document.querySelectorAll('.modal-close, .btn-cancel').forEach(btn => { btn.addEventListener('click', function() { this.closest('.modal').classList.remove('active'); }); });
+    document.querySelectorAll('.type-selector .type-option').forEach(option => { option.addEventListener('click', function() { const type = this.getAttribute('data-type'); if (type) { document.querySelectorAll('.type-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorType').value = type; } }); });
+    document.querySelectorAll('.period-selector .type-option').forEach(option => { option.addEventListener('click', function() { const period = this.getAttribute('data-period'); if (period) { document.querySelectorAll('.period-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorPeriod').value = period; } }); });
+    document.getElementById('indicatorForm').addEventListener('submit', (e) => { e.preventDefault(); saveIndicator(); });
+    document.getElementById('deleteBtn').addEventListener('click', async () => { if (confirm('¿Confirmas la eliminación?')) { const ok = await deleteIndicatorFromDB(editingId); if (ok) { document.getElementById('indicatorModal').classList.remove('active'); renderAllSections(); } } });
+    document.getElementById('actionForm').addEventListener('submit', (e) => { e.preventDefault(); saveAction(); });
+    window.addEventListener('click', function(e) { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); });
+}
+
+function openIndicatorModal(indicator = null) {
+    editingId = indicator?.id || null;
+    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+    if (indicator) {
+        document.getElementById('modalTitle').textContent = 'Editar Indicador';
+        document.getElementById('deleteBtn').style.display = 'block';
+        const typeOpt = document.querySelector(`.type-selector [data-type="${indicator.type}"]`);
+        if (typeOpt) typeOpt.classList.add('selected');
+        const periodOpt = document.querySelector(`.period-selector [data-period="${indicator.period}"]`);
+        if (periodOpt) periodOpt.classList.add('selected');
+        document.getElementById('indicatorType').value = indicator.type;
+        document.getElementById('indicatorName').value = indicator.name;
+        document.getElementById('indicatorArea').value = indicator.area;
+        document.getElementById('indicatorTarget').value = indicator.target;
+        document.getElementById('indicatorUnit').value = indicator.unit;
+        document.getElementById('indicatorCurrent').value = indicator.current || '';
+        document.getElementById('indicatorPeriod').value = indicator.period;
+    } else {
+        document.getElementById('modalTitle').textContent = 'Crear Nuevo Indicador';
+        document.getElementById('deleteBtn').style.display = 'none';
+        document.getElementById('indicatorForm').reset();
+    }
+    document.getElementById('indicatorModal').classList.add('active');
+}
+
+async function saveIndicator() {
+    const type = document.getElementById('indicatorType').value;
+    const period = document.getElementById('indicatorPeriod').value;
+    if (!type || !period) { alert('Selecciona tipo y periodicidad'); return; }
+    const data = {
+        id: editingId || null, type, name: document.getElementById('indicatorName').value,
+        area: document.getElementById('indicatorArea').value,
+        target: parseFloat(document.getElementById('indicatorTarget').value),
+        unit: document.getElementById('indicatorUnit').value,
+        current: parseFloat(document.getElementById('indicatorCurrent').value) || 0, period
+    };
+    const ok = await saveIndicatorToDB(data);
+    if (ok) {
+        document.getElementById('indicatorModal').classList.remove('active');
+        renderAllSections();
+    }
+}
+
+function openActionModal(indicatorId, indicatorName) {
+    document.getElementById('actionIndicatorId').value = indicatorId;
+    document.getElementById('actionIndicatorName').textContent = indicatorName;
+    document.getElementById('actionDate').valueAsDate = new Date();
+    document.getElementById('actionForm').reset();
+    document.getElementById('actionModal').classList.add('active');
+}
+
+async function saveAction() {
+    const indicatorId = document.getElementById('actionIndicatorId').value;
+    const description = document.getElementById('actionDescription').value.trim();
+    const date = document.getElementById('actionDate').value;
+    const status = document.getElementById('actionStatus').value;
+    const responsible = document.getElementById('actionResponsible').value.trim();
+    if (!description || !date || !status) { alert('Completa todos los campos obligatorios'); return; }
+    const ok = await saveActionToDB({ indicatorId, description, date, status, responsible: responsible || 'No asignado' });
+    if (ok) {
+        document.getElementById('actionModal').classList.remove('active');
+        document.getElementById('actionForm').reset();
+        renderAllSections();
+    }
+}
+
+// ══════════════════════════════════════════════
+// RENDERIZADO
+// ══════════════════════════════════════════════
+function renderAllSections() { renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); }
+
+function getFilteredIndicators(type, areaFilter, periodFilter) {
+    const all = [...OKRsBase, ...KPIsBase, ...indicators];
+    return all.filter(ind => {
+        if (type && ind.type !== type) return false;
+        if (areaFilter !== 'all' && ind.area !== areaFilter) return false;
+        if (periodFilter !== 'all' && ind.period !== periodFilter) return false;
+        return true;
+    });
+}
+
+function renderHome() {
+    const filtered = getFilteredIndicators(null, currentAreaFilter, currentPeriodFilter);
+    const okrs = filtered.filter(i => i.type === 'okr');
+    const kpis = filtered.filter(i => i.type === 'kpi');
+    let html = '';
+    if (okrs.length > 0) { html += `<h3 style="margin-top:24px;margin-bottom:16px;color:var(--okr-color);font-size:16px;">🎯 OKRs (${okrs.length})</h3>`; okrs.forEach(ind => html += renderIndicatorCard(ind)); }
+    if (kpis.length > 0) { html += `<h3 style="margin-top:24px;margin-bottom:16px;color:var(--kpi-color);font-size:16px;">📈 KPIs (${kpis.length})</h3>`; kpis.forEach(ind => html += renderIndicatorCard(ind)); }
+    if (!filtered.length) html = '<div class="empty-state">No hay indicadores para esta vista</div>';
+    document.getElementById('homeContent').innerHTML = html;
+    attachIndicatorEvents();
+}
+
+function renderOKRs() {
+    const filtered = getFilteredIndicators('okr', okrAreaFilter, okrPeriodFilter);
+    let html = filtered.length ? filtered.map(ind => renderIndicatorCard(ind)).join('') : '<div class="empty-state">No hay OKRs para esta vista</div>';
+    document.getElementById('okrsContent').innerHTML = html;
+    attachIndicatorEvents();
+}
+
+function renderKPIs() {
+    const filtered = getFilteredIndicators('kpi', kpiAreaFilter, kpiPeriodFilter);
+    let html = filtered.length ? filtered.map(ind => renderIndicatorCard(ind)).join('') : '<div class="empty-state">No hay KPIs para esta vista</div>';
+    document.getElementById('kpisContent').innerHTML = html;
+    attachIndicatorEvents();
+}
+
+function renderAcciones() {
+    if (!actions.length) { document.getElementById('accionesContent').innerHTML = '<div class="empty-state">No hay acciones registradas</div>'; return; }
+    let html = `<div><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <thead style="text-align:left;color:var(--text-secondary);background:var(--bg-light);">
+        <tr>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Indicador</th>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Descripción</th>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Responsable</th>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Fecha</th>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Estado</th>
+            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);text-align:center;">Acciones</th>
+        </tr></thead><tbody>`;
+    actions.forEach(action => {
+        const statusEmoji = action.status === 'mejora' ? '✅' : action.status === 'inicio' ? '🔵' : '❌';
+        html += `<tr style="border-bottom:1px solid var(--border-color);">
+            <td style="padding:10px 14px;">${action.indicatorId}</td>
+            <td style="padding:10px 14px;">${action.title || action.description || ''}</td>
+            <td style="padding:10px 14px;">${action.responsible || 'No asignado'}</td>
+            <td style="padding:10px 14px;">${action.date ? new Date(action.date + 'T00:00:00').toLocaleDateString('es-CO') : ''}</td>
+            <td style="padding:10px 14px;">${statusEmoji} ${action.status || ''}</td>
+            <td style="padding:10px 14px;text-align:center;">
+                <button class="edit-action-table-btn" data-id="${action.id}" style="background:var(--primary-color);color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin-right:4px;">✏️ Editar</button>
+                <button class="delete-action-table-btn" data-id="${action.id}" style="background:var(--danger-color);color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;">🗑️ Eliminar</button>
+            </td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('accionesContent').innerHTML = html;
+    document.querySelectorAll('.edit-action-table-btn').forEach(btn => { btn.addEventListener('click', function() { const a = actions.find(x => x.id == this.getAttribute('data-id')); if (a) openActionEditModal(a); }); });
+    document.querySelectorAll('.delete-action-table-btn').forEach(btn => { btn.addEventListener('click', function() { deleteActionItem(this.getAttribute('data-id')); }); });
+}
+
+function renderIndicatorCard(indicator) {
+    const pct = Math.min((indicator.current / indicator.target) * 100, 100);
+    const color = indicator.type === 'okr' ? '#8B5CF6' : '#06A77D';
+    let cardHtml = `<div class="indicator-card" data-id="${indicator.id}">
+        <div class="indicator-header"><div>
+            <div class="indicator-badges">
+                <span class="badge ${indicator.type}">${indicator.type.toUpperCase()}</span>
+                <span class="badge period">${indicator.period}</span>
+            </div>
+            <div class="indicator-title">${indicator.name}</div>
+            <div class="indicator-meta">${indicator.current}/${indicator.target} ${indicator.unit}</div>
+        </div></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+        <div class="progress-text">${Math.round(pct)}% de progreso</div>`;
+
+    if (indicator.type === 'kpi') {
+        const assigns = kpiAssignments[indicator.id] || [];
+        cardHtml += `<div class="kpi-collabs-section">
+            <div class="kpi-collabs-header">
+                <span class="kpi-collabs-title">👤 Desempeño Individual</span>
+                <button class="btn-small assign-collab-btn" style="padding:4px 8px;font-size:11px;background:var(--info-color);color:white;border:none;border-radius:5px;cursor:pointer;"
+                    data-id="${indicator.id}" data-name="${indicator.name}">+ Asignar</button>
+            </div>
+            <div class="kpi-collabs-list">
+            ${assigns.length === 0
+                ? '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;padding:5px;">Sin asignaciones individuales</div>'
+                : assigns.map((assign, index) => {
+                    const indivPct = assign.target > 0 ? Math.round((assign.current / assign.target) * 100) : 0;
+                    return `<div class="collab-individual-card">
+                        <div class="collab-indiv-info">
+                            <div class="collab-indiv-name">${assign.name}</div>
+                            <div class="collab-indiv-meta">${assign.current} / ${assign.target}</div>
+                        </div>
+                        <div class="collab-indiv-performance">
+                            <span class="collab-indiv-pct">${indivPct}%</span>
+                            <div style="display:flex;flex-direction:column;gap:2px">
+                                <button class="btn-icon edit-indiv-btn" data-kpiid="${indicator.id}" data-kpiname="${indicator.name}" data-index="${index}">✏️</button>
+                                <button class="btn-icon delete delete-indiv-btn" data-kpiid="${indicator.id}" data-index="${index}">✕</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')
+            }
+            </div>
+        </div>`;
+    }
+
+    const relatedActions = actions.filter(a => a.indicatorId === indicator.id);
+    if (relatedActions.length > 0) {
+        cardHtml += `<div class="actions-section">
+            <div class="actions-header"><span class="actions-title">⚡ Acciones (${relatedActions.length})</span></div>
+            <div class="actions-list">
+            ${relatedActions.map(action => `
+                <div class="action-item-card">
+                    <div class="action-item-info">
+                        <div class="action-item-title">${action.title || action.description}</div>
+                        <div class="action-item-meta">Fecha: ${action.date || 'Sin fecha'}</div>
+                        <div class="action-item-responsible">👤 ${action.responsible || 'No asignado'}</div>
+                    </div>
+                    <div class="action-item-actions">
+                        <button class="btn-icon-action edit-action-btn" data-id="${action.id}">✏️ Editar</button>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    }
+
+    cardHtml += `<div class="indicator-actions">
+        <button class="btn-small btn-edit" data-id="${indicator.id}">✏️ Editar</button>
+        <button class="btn-small btn-action" data-id="${indicator.id}">⚡ Agregar Acción</button>
+    </div></div>`;
+    return cardHtml;
+}
+
+function attachIndicatorEvents() {
+    document.querySelectorAll('.btn-edit').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id == id); if (indicator) openIndicatorModal(indicator); }); });
+    document.querySelectorAll('.btn-action').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id == id); if (indicator) openActionModal(id, indicator.name); }); });
+    document.querySelectorAll('.assign-collab-btn').forEach(btn => { btn.addEventListener('click', function() { if (!masterCollaborators.length) { alert('Primero agrega colaboradores en 👥 Colaboradores'); return; } openKpiAssignModal(this.getAttribute('data-id'), this.getAttribute('data-name')); }); });
+    document.querySelectorAll('.edit-indiv-btn').forEach(btn => { btn.addEventListener('click', function() { openKpiAssignModal(this.getAttribute('data-kpiid'), this.getAttribute('data-kpiname'), this.getAttribute('data-index')); }); });
+    document.querySelectorAll('.delete-indiv-btn').forEach(btn => { btn.addEventListener('click', function() { deleteKpiAssignmentItem(this.getAttribute('data-kpiid'), this.getAttribute('data-index')); }); });
+    document.querySelectorAll('.edit-action-btn').forEach(btn => { btn.addEventListener('click', function() { const a = actions.find(x => x.id == this.getAttribute('data-id')); if (a) openActionEditModal(a); }); });
+}
+
+// ══════════════════════════════════════════════
+// COLABORADORES
+// ══════════════════════════════════════════════
+function initializeCollabManagement() {
+    document.getElementById('manageCollabsBtn').addEventListener('click', openMasterCollabModal);
+    document.getElementById('masterCollabForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const name = document.getElementById('newCollabName').value.trim();
+        if (!name) return;
+        if (masterCollaborators.includes(name)) { alert('Este colaborador ya existe.'); return; }
+        const ok = await saveCollabToDB(name);
+        if (ok) { document.getElementById('newCollabName').value = ''; renderMasterCollabList(); }
+    });
+    document.getElementById('kpiAssignForm').addEventListener('submit', function(e) { e.preventDefault(); saveKpiAssignment(); });
+}
+
+function openMasterCollabModal() { renderMasterCollabList(); document.getElementById('masterCollabModal').classList.add('active'); }
+
+function renderMasterCollabList() {
+    const list = document.getElementById('masterCollabList');
+    if (!masterCollaborators.length) { list.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-tertiary);font-size:12px;">No hay colaboradores registrados.</div>'; return; }
+    list.innerHTML = masterCollaborators.map((name, index) => `
+        <div class="master-collab-item">
+            <span>${name}</span>
+            <button class="btn-icon delete" onclick="deleteMasterCollab('${name}')">✕</button>
+        </div>`).join('');
+}
+
+async function deleteMasterCollab(name) {
+    if (confirm('¿Eliminar este colaborador de la lista maestra?')) {
+        const ok = await deleteCollabFromDB(name);
+        if (ok) renderMasterCollabList();
+    }
+}
+
+function openKpiAssignModal(kpiId, kpiName, collabEditIndex = null) {
+    document.getElementById('assignKpiId').value = kpiId;
+    document.getElementById('assignEditIndex').value = collabEditIndex !== null ? collabEditIndex : '';
+    document.getElementById('kpiAssignTitle').textContent = collabEditIndex !== null ? 'Editar Meta Individual' : `Asignar a: ${kpiName}`;
+    document.getElementById('btnAssignSubmit').textContent = collabEditIndex !== null ? 'Actualizar' : 'Asignar';
+    const select = document.getElementById('assignCollabSelect');
+    select.innerHTML = '<option value="">-- Seleccionar --</option>';
+    masterCollaborators.forEach(name => { select.innerHTML += `<option value="${name}">${name}</option>`; });
+    document.getElementById('kpiAssignForm').reset();
+    document.getElementById('assignKpiId').value = kpiId;
+    document.getElementById('assignEditIndex').value = collabEditIndex !== null ? collabEditIndex : '';
+    if (collabEditIndex !== null) {
+        const assignment = kpiAssignments[kpiId][collabEditIndex];
+        document.getElementById('assignCollabSelect').value = assignment.name;
+        document.getElementById('assignCollabSelect').disabled = true;
+        document.getElementById('assignTarget').value = assignment.target;
+        document.getElementById('assignCurrent').value = assignment.current || '';
+    } else {
+        document.getElementById('assignCollabSelect').disabled = false;
+    }
+    document.getElementById('kpiAssignModal').classList.add('active');
+}
+
+async function saveKpiAssignment() {
+    const kpiId = document.getElementById('assignKpiId').value;
+    const editIndex = document.getElementById('assignEditIndex').value;
+    const assignData = {
+        name: document.getElementById('assignCollabSelect').value,
+        target: parseFloat(document.getElementById('assignTarget').value),
+        current: parseFloat(document.getElementById('assignCurrent').value) || 0
+    };
+    if (!assignData.name) { alert('Selecciona un colaborador.'); return; }
+    if (editIndex !== '') {
+        const assign = kpiAssignments[kpiId][editIndex];
+        const ok = await updateAssignmentInDB(assign.id, assignData);
+        if (ok) { kpiAssignments[kpiId][editIndex] = { ...assign, ...assignData }; }
+    } else {
+        const exists = (kpiAssignments[kpiId] || []).some(a => a.name === assignData.name);
+        if (exists) { alert('Este colaborador ya está asignado.'); return; }
+        await saveAssignmentToDB(kpiId, assignData);
+    }
+    closeModalById('kpiAssignModal');
+    renderAllSections();
+}
+
+async function deleteKpiAssignmentItem(kpiId, index) {
+    if (confirm('¿Eliminar esta asignación individual?')) {
+        const ok = await deleteAssignmentFromDB(kpiId, index);
+        if (ok) renderAllSections();
+    }
+}
+
+// ══════════════════════════════════════════════
+// ACCIONES — EDITAR / ELIMINAR
+// ══════════════════════════════════════════════
+function openActionEditModal(action) {
+    const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id === action.indicatorId);
+    const indicatorName = indicator ? indicator.name : action.indicatorId;
+    const modalContent = document.querySelector('#actionModal .modal-content');
+    modalContent.innerHTML = `
+        <button class="modal-close" onclick="closeModalById('actionModal')">×</button>
+        <div class="modal-header"><span>✏️ Editar Acción — ${indicatorName}</span></div>
+        <div class="form-group"><label>Acción *</label><input type="text" id="editActionTitle" value="${action.title || action.description || ''}" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Responsable</label>
+                <select id="editActionResponsible" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                    <option value="">Sin asignar</option>
+                    ${masterCollaborators.map(c => `<option value="${c}" ${action.responsible === c ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="editActionDate" value="${action.date || ''}" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;"></div>
+        </div>
+        <div class="form-group"><label>Estado</label>
+            <select id="editActionStatus" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="inicio" ${action.status==='inicio'?'selected':''}>🔵 En Inicio</option>
+                <option value="mejora" ${action.status==='mejora'?'selected':''}>✅ Mejora</option>
+                <option value="nomejora" ${action.status==='nomejora'?'selected':''}>❌ Sin Mejora</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+            <button class="action-btn success" onclick="submitActionEdit('${action.id}')">💾 Guardar</button>
+            <button class="action-btn" style="background:var(--danger-color);" onclick="deleteActionItem('${action.id}')">🗑️ Eliminar</button>
+            <button class="action-btn" style="background:var(--text-secondary);" onclick="closeModalById('actionModal')">Cancelar</button>
+        </div>`;
+    document.getElementById('actionModal').classList.add('active');
+}
+
+async function submitActionEdit(actionId) {
+    const title = document.getElementById('editActionTitle').value.trim();
+    if (!title) { alert('La descripción no puede estar vacía'); return; }
+    const data = {
+        title,
+        responsible: document.getElementById('editActionResponsible').value,
+        date: document.getElementById('editActionDate').value,
+        status: document.getElementById('editActionStatus').value
+    };
+    const ok = await updateActionInDB(actionId, data);
+    if (ok) { closeModalById('actionModal'); renderAllSections(); }
+}
+
+async function deleteActionItem(actionId) {
+    if (confirm('¿Eliminar esta acción?')) {
+        const ok = await deleteActionFromDB(actionId);
+        if (ok) { closeModalById('actionModal'); renderAllSections(); }
+    }
+}
+
+function closeModalById(id) { document.getElementById(id).classList.remove('active'); }
+</script>
 </body>
 </html>
