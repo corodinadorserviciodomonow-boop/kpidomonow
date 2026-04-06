@@ -1605,14 +1605,14 @@ function openAssignModal(kpiId, kpiName, editIdx=null) {
 
 // ── Init ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
-  try {
+ try {
   await loadAll();
+  renderAll();
+  document.getElementById('loadingOverlay').style.display='none';
 } catch (e) {
-  console.error("Error cargando datos:", e);
+  console.error("Error Supabase:", e);
   alert("Error conectando con Supabase");
 }
-
-document.getElementById('loadingOverlay').style.display='none';
 
   // Nav
   document.querySelectorAll('.nav-link[data-section]').forEach(link=>{
