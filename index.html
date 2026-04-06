@@ -1603,6 +1603,53 @@ function openAssignModal(kpiId, kpiName, editIdx=null) {
   openModal('assignModal');
 }
 
+async function loadAll() {
+  const [i,a,c,as] = await Promise.all([
+    sb.from('kpi_indicators').select('*'),
+    sb.from('kpi_actions').select('*'),
+    sb.from('kpi_collaborators').select('*'),
+    sb.from('kpi_assignments').select('*')
+  ]);
+
+  // Indicadores
+  indicators = (i.data || []).map(r => ({
+    id: r.id,
+    type: r.type,
+    name: r.name,
+    area: r.area,
+    target: r.target,
+    unit: r.unit,
+    current: r.current,
+    period: r.period
+  }));
+
+  // Acciones
+  actions = (a.data || []).map(r => ({
+    id: r.id,
+    indicatorId: r.indicator_id,
+    title: r.title,
+    description: r.title,
+    date: r.date,
+    status: r.status,
+    responsible: r.responsible
+  }));
+
+  // Colaboradores
+  masterCollaborators = (c.data || []).map(r => r.name);
+
+  // Asignaciones
+  kpiAssignments = {};
+  (as.data || []).forEach(r => {
+    if (!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id] = [];
+    kpiAssignments[r.kpi_id].push({
+      id: r.id,
+      name: r.collab_name,
+      target: r.target,
+      current: r.current
+    });
+  });
+}
+
 // ── Init ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
  try {
