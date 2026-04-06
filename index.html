@@ -1269,64 +1269,6 @@ const KPIsBase = [
   { id:'kpi-9', name:'Tasa entregas puntual',            area:'servicio',  period:'semanal',   target:90,     unit:'%',         current:88,    type:'kpi' }
 ];
 
-if(isBase) {
-  // Actualiza en memoria
-  const arr = data.type==='okr'?OKRsBase:KPIsBase;
-  const idx = arr.findIndex(i=>i.id===editingId);
-  if(idx!==-1) arr[idx]={...arr[idx],...data};
-
-  // Guardar en Supabase
-  const { data: existing } = await sb
-    .from('kpi_indicators')
-    .select('id')
-    .eq('id', editingId)
-    .maybeSingle();
-
-  if (existing) {
-    await sb.from('kpi_indicators').update({
-      type: data.type,
-      name: data.name,
-      area: data.area,
-      target: data.target,
-      unit: data.unit,
-      current: data.current,
-      period: data.period
-    }).eq('id', editingId);
-  } else {
-    await sb.from('kpi_indicators').insert({
-      id: editingId,
-      type: data.type,
-      name: data.name,
-      area: data.area,
-      target: data.target,
-      unit: data.unit,
-      current: data.current,
-      period: data.period
-    });
-  }
-
-  return true;
-} else {
-  const {error}=await sb.from('kpi_indicators')
-    .update({
-      type:data.type,
-      name:data.name,
-      area:data.area,
-      target:data.target,
-      unit:data.unit,
-      current:data.current,
-      period:data.period
-    })
-    .eq('id',editingId);
-
-  if(error){alert('Error: '+error.message);return false;}
-
-  const idx=indicators.findIndex(i=>i.id===editingId);
-  if(idx!==-1) indicators[idx]=data;
-
-  return true;
-}
-
 // ── Modal helpers ─────────────────────────────
 function openModal(id){ document.getElementById(id).classList.add('active'); }
 function closeModal(id){ document.getElementById(id).classList.remove('active'); }
@@ -1765,7 +1707,7 @@ renderAll();}
 }
   });
 
- document.getElementById('assignForm').addEventListener('submit', async (e)=>{
+ document.getElementById('collabForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const name=document.getElementById('newCollabName').value.trim();
     if(!name) return;
