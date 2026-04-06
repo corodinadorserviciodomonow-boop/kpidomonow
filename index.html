@@ -1269,119 +1269,61 @@ const KPIsBase = [
   { id:'kpi-9', name:'Tasa entregas puntual',            area:'servicio',  period:'semanal',   target:90,     unit:'%',         current:88,    type:'kpi' }
 ];
 
-// ── Supabase ──────────────────────────────────
-async function loadAll() {
-  try {
-    const [i,a,c,as] = await Promise.all([
-      sb.from('kpi_indicators').select('*'),
-      sb.from('kpi_actions').select('*'),
-      sb.from('kpi_collaborators').select('*'),
-      sb.from('kpi_assignments').select('*')
-    ]);
-    const allFromDB = (i.data||[]).map(r=>({id:r.id,type:r.type,name:r.name,area:r.area,target:r.target,unit:r.unit,current:r.current,period:r.period}));
-    // Aplicar overrides de indicadores base guardados en Supabase
-    allFromDB.forEach(dbInd => {
-      const baseOkr = OKRsBase.findIndex(x=>x.id===dbInd.id);
-      if(baseOkr!==-1){ OKRsBase[baseOkr]={...OKRsBase[baseOkr],...dbInd}; return; }
-      const baseKpi = KPIsBase.findIndex(x=>x.id===dbInd.id);
-      if(baseKpi!==-1){ KPIsBase[baseKpi]={...KPIsBase[baseKpi],...dbInd}; return; }
-    });
-    // Solo quedan los personalizados (no base) en indicators
-    indicators = allFromDB.filter(d => ![...OKRsBase,...KPIsBase].some(b=>b.id===d.id));
-    actions = (a.data||[]).map(r=>({id:r.id,indicatorId:r.indicator_id,title:r.title,description:r.title,date:r.date,status:r.status,responsible:r.responsible}));
-    masterCollaborators = (c.data||[]).map(r=>r.name);
-    kpiAssignments = {};
-    (as.data||[]).forEach(r=>{
-      if(!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id]=[];
-      kpiAssignments[r.kpi_id].push({id:r.id,name:r.collab_name,target:r.target,current:r.current});
-    });
-  } catch(e) { console.error(e); }
-}
+if(isBase) {
+  // Actualiza en memoria
+  const arr = data.type==='okr'?OKRsBase:KPIsBase;
+  const idx = arr.findIndex(i=>i.id===editingId);
+  if(idx!==-1) arr[idx]={...arr[idx],...data};
 
-async function saveIndicatorDB(data) {
-  if(editingId) {
-    const isBase = [...OKRsBase,...KPIsBase].some(i=>i.id===editingId);
-    if(isBase) {
-      // Actualizar en memoria
-      const arr = data.type==='okr'?OKRsBase:KPIsBase;
-      const idx = arr.findIndex(i=>i.id===editingId);
-      if(idx!==-1) arr[idx]={...arr[idx],...data};
-      // Guardar en Supabase para que persista
-      const existing = await sb.from('kpi_indicators').select('id').eq('id', editingId).single();
-      if(existing.data) {
-        await sb.from('kpi_indicators').update({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).eq('id', editingId);
-      } else {
-        await sb.from('kpi_indicators').insert({id:editingId,type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period});
-      }
-      return true;
-    }
-    const {error}=await sb.from('kpi_indicators').update({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).eq('id',editingId);
-    if(error){alert('Error: '+error.message);return false;}
-    const idx=indicators.findIndex(i=>i.id===editingId);
-    if(idx!==-1) indicators[idx]=data;
-    return true;
+  // Guardar en Supabase
+  const { data: existing } = await sb
+    .from('kpi_indicators')
+    .select('id')
+    .eq('id', editingId)
+    .single();
+
+  if (existing) {
+    await sb.from('kpi_indicators').update({
+      type: data.type,
+      name: data.name,
+      area: data.area,
+      target: data.target,
+      unit: data.unit,
+      current: data.current,
+      period: data.period
+    }).eq('id', editingId);
+  } else {
+    await sb.from('kpi_indicators').insert({
+      id: editingId,
+      type: data.type,
+      name: data.name,
+      area: data.area,
+      target: data.target,
+      unit: data.unit,
+      current: data.current,
+      period: data.period
+    });
   }
-  const {data:saved,error}=await sb.from('kpi_indicators').insert({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).select().single();
-  if(error){alert('Error: '+error.message);return false;}
-  indicators.push({...data,id:saved.id});
+
   return true;
-}
-async function deleteIndicatorDB(id) {
-  if([...OKRsBase,...KPIsBase].some(i=>i.id===id)){alert('No se pueden eliminar indicadores base.');return false;}
-  const{error}=await sb.from('kpi_indicators').delete().eq('id',id);
+} else {
+  const {error}=await sb.from('kpi_indicators')
+    .update({
+      type:data.type,
+      name:data.name,
+      area:data.area,
+      target:data.target,
+      unit:data.unit,
+      current:data.current,
+      period:data.period
+    })
+    .eq('id',editingId);
+
   if(error){alert('Error: '+error.message);return false;}
-  indicators=indicators.filter(i=>i.id!==id);
-  return true;
-}
-async function saveActionDB(d) {
-  const{data:saved,error}=await sb.from('kpi_actions').insert({indicator_id:d.indicatorId,title:d.description,date:d.date,status:d.status,responsible:d.responsible}).select().single();
-  if(error){alert('Error: '+error.message);return false;}
-  actions.push({...d,id:saved.id,title:d.description});
-  return true;
-}
-async function updateActionDB(id,d) {
-  const{error}=await sb.from('kpi_actions').update({title:d.title,date:d.date,status:d.status,responsible:d.responsible}).eq('id',id);
-  if(error){alert('Error: '+error.message);return false;}
-  const idx=actions.findIndex(a=>a.id==id);
-  if(idx!==-1) actions[idx]={...actions[idx],...d,description:d.title};
-  return true;
-}
-async function deleteActionDB(id) {
-  const{error}=await sb.from('kpi_actions').delete().eq('id',id);
-  if(error){alert('Error: '+error.message);return false;}
-  actions=actions.filter(a=>a.id!=id);
-  return true;
-}
-async function saveCollabDB(name) {
-  const{error}=await sb.from('kpi_collaborators').insert({name});
-  if(error){alert('Error: '+error.message);return false;}
-  masterCollaborators.push(name);
-  return true;
-}
-async function deleteCollabDB(name) {
-  const{error}=await sb.from('kpi_collaborators').delete().eq('name',name);
-  if(error){alert('Error: '+error.message);return false;}
-  masterCollaborators=masterCollaborators.filter(c=>c!==name);
-  return true;
-}
-async function saveAssignDB(kpiId,d) {
-  const{data:saved,error}=await sb.from('kpi_assignments').insert({kpi_id:kpiId,collab_name:d.name,target:d.target,current:d.current}).select().single();
-  if(error){alert('Error: '+error.message);return false;}
-  if(!kpiAssignments[kpiId]) kpiAssignments[kpiId]=[];
-  kpiAssignments[kpiId].push({...d,id:saved.id});
-  return true;
-}
-async function updateAssignDB(id,d) {
-  const{error}=await sb.from('kpi_assignments').update({target:d.target,current:d.current}).eq('id',id);
-  if(error){alert('Error: '+error.message);return false;}
-  return true;
-}
-async function deleteAssignDB(kpiId,idx) {
-  const a=kpiAssignments[kpiId][idx];
-  if(!a) return false;
-  const{error}=await sb.from('kpi_assignments').delete().eq('id',a.id);
-  if(error){alert('Error: '+error.message);return false;}
-  kpiAssignments[kpiId].splice(idx,1);
+
+  const idx=indicators.findIndex(i=>i.id===editingId);
+  if(idx!==-1) indicators[idx]=data;
+
   return true;
 }
 
@@ -1560,7 +1502,9 @@ function renderAcciones() {
     btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
   });
   el.querySelectorAll('.del-action-table').forEach(btn=>{
-    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta acción?')){ await deleteActionDB(btn.dataset.id); renderAll(); } });
+    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta acción?')){ await deleteActionDB(btn.dataset.id);
+await loadAll();
+renderAll(); } });
   });
 }
 function renderAll() {
@@ -1604,7 +1548,8 @@ function attachCardEvents(containerId) {
     btn.addEventListener('click',()=>{ openAssignModal(btn.dataset.kpiid,btn.dataset.kpiname,btn.dataset.idx); });
   });
   el.querySelectorAll('.delete-indiv-btn').forEach(btn=>{
-    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta asignación?')){ await deleteAssignDB(btn.dataset.kpiid,btn.dataset.idx); renderAll(); } });
+    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta asignación?')){ await deleteAssignDB(btn.dataset.kpiid,btn.dataset.idx); await loadAll();
+renderAll(); } });
   });
   el.querySelectorAll('.edit-action-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
@@ -1680,13 +1625,15 @@ function openActionEditModal(action) {
       </select>
     </div>
     <div class="form-footer">
-      <button class="btn btn-danger" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteActionDB('${action.id}');closeModal('actionModal');renderAll();}})()">🗑 Eliminar</button>
+      <button class="btn btn-danger" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteActionDB('${action.id}');closeModal('actionModal');await loadAll();
+renderAll();}})()">🗑 Eliminar</button>
       <button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="(async()=>{
         const t=document.getElementById('eaTitle').value.trim();
         if(!t){alert('La descripción no puede estar vacía');return;}
         const ok=await updateActionDB('${action.id}',{title:t,responsible:document.getElementById('eaResp').value,date:document.getElementById('eaDate').value,status:document.getElementById('eaStatus').value});
-        if(ok){closeModal('actionModal');renderAll();}
+        if(ok){closeModal('actionModal');await loadAll();
+renderAll();}
       })()">💾 Guardar</button>
     </div>`;
   openModal('actionModal');
@@ -1780,7 +1727,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
   document.getElementById('closeIndicatorModal').addEventListener('click',()=>closeModal('indicatorModal'));
   document.getElementById('cancelIndBtn').addEventListener('click',()=>closeModal('indicatorModal'));
   document.getElementById('deleteIndBtn').addEventListener('click',async()=>{
-    if(confirm('¿Eliminar este indicador?')){ const ok=await deleteIndicatorDB(editingId); if(ok){closeModal('indicatorModal');renderAll();} }
+    if(confirm('¿Eliminar este indicador?')){ const ok=await deleteIndicatorDB(editingId); if(ok){closeModal('indicatorModal');await loadAll();
+renderAll();} }
   });
 
   // Forms
@@ -1791,7 +1739,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
     if(!type||!period){alert('Selecciona tipo y periodicidad');return;}
     const data={id:editingId||null,type,name:document.getElementById('indicatorName').value,area:document.getElementById('indicatorArea').value,target:parseFloat(document.getElementById('indicatorTarget').value),unit:document.getElementById('indicatorUnit').value,current:parseFloat(document.getElementById('indicatorCurrent').value)||0,period};
     const ok=await saveIndicatorDB(data);
-    if(ok){closeModal('indicatorModal');renderAll();}
+    if(ok){closeModal('indicatorModal');await loadAll();
+renderAll();}
   });
 
   document.getElementById('actionForm').addEventListener('submit',async e=>{
@@ -1803,7 +1752,11 @@ document.addEventListener('DOMContentLoaded', async()=>{
     const resp=document.getElementById('actionResp').value.trim();
     if(!desc||!date||!status){alert('Completa todos los campos');return;}
     const ok=await saveActionDB({indicatorId:indId,description:desc,date,status,responsible:resp||'No asignado'});
-    if(ok){closeModal('actionModal');renderAll();}
+    if(ok){
+  closeModal('actionModal');
+  await loadAll();
+  renderAll();
+}
   });
 
   document.getElementById('collabForm').addEventListener('submit',async e=>{
@@ -1832,7 +1785,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
       await saveAssignDB(kpiId,{name,target,current});
     }
     closeModal('assignModal');
-    renderAll();
+    await loadAll();
+renderAll();
   });
 
   // Close on overlay click
@@ -1840,7 +1794,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
     overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('active'); });
   });
 
-  renderAll();
+  await loadAll();
+renderAll();
 });
 
 function renderCollabList() {
@@ -1853,7 +1808,8 @@ function renderCollabList() {
         <div class="collab-avatar">${initials}</div>
         <span style="font-weight:600">${name}</span>
       </div>
-      <button class="icon-btn del" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteCollabDB('${name}');renderCollabList();updateStats();renderAll();}})()">✕</button>
+      <button class="icon-btn del" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteCollabDB('${name}');renderCollabList();updateStats();await loadAll();
+renderAll();}})()">✕</button>
     </div>`;
   }).join('');
 }
