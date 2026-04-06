@@ -1,994 +1,1845 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Gerencial - DomoNow</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary-color: #1F4788;
-            --primary-light: #2E75B6;
-            --accent-color: #0B5E8F;
-            --success-color: #06A77D;
-            --warning-color: #F7C616;
-            --danger-color: #E85D4F;
-            --info-color: #3B82F6;
-            --okr-color: #8B5CF6;
-            --kpi-color: #06A77D;
-            --bg-light: #F8F9FA;
-            --bg-card: #FFFFFF;
-            --border-color: #E8EAF0;
-            --text-primary: #1A1A1A;
-            --text-secondary: #6B7280;
-            --text-tertiary: #9CA3AF;
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
-        .dashboard-wrapper { display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: var(--primary-color); color: white; padding: 24px; box-shadow: 2px 0 12px rgba(0,0,0,0.08); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 700; margin-bottom: 32px; display: flex; align-items: center; gap: 10px; }
-        .nav-menu { list-style: none; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.8); text-decoration: none; border-radius: 8px; cursor: pointer; transition: all 300ms; border: 2px solid transparent; font-size: 14px; font-weight: 500; }
-        .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-        .nav-link.active { background: rgba(255,255,255,0.25); color: white; border-color: rgba(255,255,255,0.5); }
-        .main-content { margin-left: 260px; flex: 1; padding: 32px; overflow-y: auto; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; background: var(--bg-card); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex-wrap: wrap; gap: 16px; }
-        .header-title { font-size: 28px; font-weight: 700; color: var(--primary-color); }
-        .header-actions { display: flex; gap: 12px; align-items: center; }
-        .action-btn { padding: 10px 18px; border: none; background: var(--primary-color); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 200ms; display: flex; align-items: center; gap: 8px; }
-        .action-btn:hover { background: var(--accent-color); transform: translateY(-2px); }
-        .action-btn.success { background: var(--success-color); }
-        .action-btn.info { background: var(--info-color); }
-        .section { display: none; }
-        .section.active { display: block; animation: fadeIn 300ms ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .filters-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
-        .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        .filter-btn { padding: 8px 14px; border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 200ms; color: var(--text-secondary); }
-        .filter-btn:hover { border-color: var(--primary-light); background: var(--bg-light); }
-        .filter-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-        .indicator-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; margin-bottom: 16px; transition: all 300ms; }
-        .indicator-card:hover { border-color: var(--primary-light); box-shadow: 0 4px 12px rgba(31, 71, 136, 0.1); }
-        .indicator-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .indicator-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .badge.okr { background: rgba(139, 92, 246, 0.15); color: var(--okr-color); }
-        .badge.kpi { background: rgba(6, 167, 125, 0.15); color: var(--kpi-color); }
-        .badge.period { background: rgba(59, 130, 246, 0.15); color: var(--info-color); }
-        .indicator-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 8px 0; }
-        .indicator-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
-        .progress-bar { width: 100%; height: 8px; background: var(--bg-light); border-radius: 4px; overflow: hidden; margin: 12px 0; }
-        .progress-fill { height: 100%; border-radius: 4px; transition: width 500ms ease-out; }
-        .progress-text { font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; }
-        .indicator-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border-color); }
-        .btn-small { padding: 7px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 200ms; display: flex; align-items: center; gap: 6px; }
-        .btn-edit { background: var(--info-color); color: white; }
-        .btn-edit:hover { background: #2563EB; }
-        .btn-action { background: var(--success-color); color: white; }
-        .btn-action:hover { background: #059669; }
-        .kpi-collabs-section { margin-top: 16px; padding: 12px; border-top: 1px solid var(--border-color); background-color: #fbfcfd; border-radius: 8px; }
-        .kpi-collabs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .kpi-collabs-title { font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
-        .collab-individual-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; transition: all 200ms; }
-        .collab-individual-card:hover { border-color: var(--primary-light); background-color: #f4f7fa; }
-        .collab-indiv-info { flex: 1; }
-        .collab-indiv-name { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-        .collab-indiv-meta { color: var(--text-secondary); }
-        .collab-indiv-performance { text-align: right; margin-left: 15px; display: flex; align-items: center; gap: 8px; }
-        .collab-indiv-pct { font-weight: 700; font-size: 14px; color: var(--primary-color); }
-        .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-tertiary); transition: color 200ms; border-radius: 4px; }
-        .btn-icon:hover { color: var(--primary-color); background-color: rgba(31, 71, 136, 0.1); }
-        .btn-icon.delete:hover { color: var(--danger-color); background-color: rgba(232, 93, 79, 0.1); }
-        .actions-section { margin-top: 16px; padding: 12px; border-top: 1px solid var(--border-color); background-color: #fef9f3; border-radius: 8px; }
-        .actions-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .actions-title { font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
-        .action-item-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px; transition: all 200ms; }
-        .action-item-card:hover { border-color: var(--primary-light); background-color: #fffaf5; }
-        .action-item-info { flex: 1; }
-        .action-item-title { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-        .action-item-meta { color: var(--text-secondary); font-size: 11px; margin-bottom: 2px; }
-        .action-item-responsible { color: var(--info-color); font-weight: 500; font-size: 11px; display: flex; align-items: center; gap: 4px; }
-        .action-item-actions { display: flex; gap: 4px; flex-direction: column; }
-        .btn-icon-action { background: none; border: none; cursor: pointer; padding: 4px 6px; color: var(--text-tertiary); transition: color 200ms; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-        .btn-icon-action:hover { color: var(--primary-color); background-color: rgba(31, 71, 136, 0.1); }
-        .btn-icon-action.delete:hover { color: var(--danger-color); background-color: rgba(232, 93, 79, 0.1); }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--bg-card); border-radius: 12px; padding: 32px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: auto; position: relative; }
-        .modal-header { font-size: 20px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-secondary); padding: 0; position: absolute; top: 20px; right: 20px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: inherit; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(31, 71, 136, 0.1); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-        .form-actions button { padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
-        .btn-cancel { background: var(--bg-light); color: var(--text-primary); }
-        .btn-submit { background: var(--primary-color); color: white; }
-        .btn-delete-modal { background: var(--danger-color); color: white; margin-right: auto; }
-        .type-selector, .period-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .type-option { padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; text-align: center; font-weight: 600; font-size: 12px; background: var(--bg-light); transition: all 200ms; color: var(--text-secondary); }
-        .type-option:hover { border-color: var(--primary-color); color: var(--primary-color); }
-        .type-option.selected { border-color: var(--success-color); background: rgba(6, 167, 125, 0.1); color: var(--success-color); }
-        .alert { padding: 16px; border-radius: 8px; border-left: 4px solid; margin-bottom: 16px; font-size: 14px; }
-        .alert.info { background: rgba(31, 71, 136, 0.1); border-color: var(--primary-color); color: var(--primary-color); }
-        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-tertiary); font-size: 14px; }
-        .master-collab-list { margin-top: 15px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
-        .master-collab-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--border-color); font-size: 13px; }
-        .master-collab-item:last-child { border-bottom: none; }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 15px; font-weight: 600; color: var(--primary-color); }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-light); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DomoNow — Intelligence Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #0f0f18;
+  --bg3: #141420;
+  --surface: #1a1a28;
+  --surface2: #1f1f30;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --text: #f0f0f8;
+  --text2: #9090aa;
+  --text3: #5a5a72;
+  --accent: #6c63ff;
+  --accent2: #8b7fff;
+  --accent-glow: rgba(108,99,255,0.3);
+  --green: #00d98b;
+  --green-dim: rgba(0,217,139,0.12);
+  --amber: #ffb547;
+  --amber-dim: rgba(255,181,71,0.12);
+  --red: #ff5f7e;
+  --red-dim: rgba(255,95,126,0.12);
+  --blue: #38bdf8;
+  --blue-dim: rgba(56,189,248,0.12);
+  --purple: #c084fc;
+  --purple-dim: rgba(192,132,252,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --sidebar-w: 240px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient background orbs */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(108,99,255,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -150px; right: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,217,139,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  padding: 0;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.logo-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.logo-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 10px 8px 4px;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+.nav-link::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 3px; height: 100%;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  transform: scaleY(0);
+  transition: transform var(--transition);
+}
+.nav-link:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.nav-link.active {
+  background: rgba(108,99,255,0.12);
+  color: var(--accent2);
+  border-color: rgba(108,99,255,0.2);
+}
+.nav-link.active::before { transform: scaleY(1); }
+.nav-icon { font-size: 16px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+.nav-link.active .nav-badge {
+  background: var(--accent);
+  color: #fff;
+}
+
+.sidebar-user {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px;
+  color: #fff; flex-shrink: 0;
+}
+.user-name { font-size: 12px; font-weight: 600; }
+.user-role { font-size: 11px; color: var(--text3); }
+.user-status {
+  margin-left: auto;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topbar-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.topbar-title span { color: var(--accent2); font-style: italic; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  letter-spacing: 0.2px;
+}
+.btn-ghost {
+  background: var(--surface);
+  color: var(--text2);
+  border-color: var(--border2);
+}
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.btn-primary:hover {
+  background: var(--accent2);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px var(--accent-glow);
+}
+.btn-danger { background: var(--red-dim); color: var(--red); border-color: rgba(255,95,126,0.2); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-success { background: var(--green-dim); color: var(--green); border-color: rgba(0,217,139,0.2); }
+.btn-success:hover { background: var(--green); color: #fff; }
+
+/* ── CONTENT ── */
+.content {
+  padding: 28px;
+  max-width: 1400px;
+}
+
+/* ── STAT CARDS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+  cursor: default;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-accent, var(--accent));
+  opacity: 0.7;
+}
+.stat-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.stat-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--card-bg, rgba(108,99,255,0.12));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+.stat-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.stat-delta {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.delta-up { background: var(--green-dim); color: var(--green); }
+.delta-neutral { background: var(--amber-dim); color: var(--amber); }
+
+/* ── FILTERS ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-right: 4px;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.chip:hover { border-color: var(--accent); color: var(--accent2); }
+.chip.active {
+  background: rgba(108,99,255,0.15);
+  border-color: rgba(108,99,255,0.4);
+  color: var(--accent2);
+}
+.chip-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+/* ── SECTION HEADER ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ── INDICATOR CARDS ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.ind-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all var(--transition);
+  position: relative;
+}
+.ind-card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  transform: translateY(-2px);
+}
+.ind-card-accent {
+  height: 3px;
+  background: var(--card-color, var(--accent));
+  opacity: 0.6;
+}
+.ind-card-body { padding: 18px 20px; }
+.ind-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ind-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.badge-okr { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(192,132,252,0.2); }
+.badge-kpi { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,217,139,0.2); }
+.badge-period { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(56,189,248,0.15); }
+.badge-area { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,181,71,0.15); }
+
+.ind-pct-badge {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px;
+  color: var(--text);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.ind-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+.ind-meta {
+  font-size: 12px;
+  color: var(--text3);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* Progress arc (circular mini) */
+.ind-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+.ind-progress-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ind-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--card-color, var(--accent));
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.ind-progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -2px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--card-color, var(--accent));
+  box-shadow: 0 0 8px var(--card-color, var(--accent));
+}
+.ind-progress-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Collabs inside card */
+.ind-collabs {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 12px;
+}
+.ind-collabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ind-collabs-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+.collab-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+.collab-row:last-child { margin-bottom: 0; }
+.collab-row:hover { border-color: var(--border2); }
+.collab-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.collab-info { flex: 1; min-width: 0; }
+.collab-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.collab-val { font-size: 11px; color: var(--text3); }
+.collab-pct {
+  font-size: 13px; font-weight: 700;
+  color: var(--card-color, var(--accent));
+}
+.collab-mini-bar-wrap {
+  width: 60px; height: 3px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.collab-mini-fill {
+  height: 100%;
+  background: var(--card-color, var(--accent));
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+.collab-actions { display: flex; gap: 4px; }
+.icon-btn {
+  width: 26px; height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: all var(--transition);
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+.icon-btn.del:hover { color: var(--red); }
+
+/* Actions inside card */
+.ind-actions-section {
+  background: rgba(255,181,71,0.04);
+  border: 1px solid rgba(255,181,71,0.1);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 10px;
+}
+.ind-actions-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ind-actions-title {
+  font-size: 11px; font-weight: 700;
+  color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px;
+  display: flex; align-items: center; gap: 6px;
+}
+.action-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  transition: all var(--transition);
+}
+.action-chip:last-child { margin-bottom: 0; }
+.action-chip:hover { border-color: var(--border2); }
+.action-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.action-dot.mejora { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.action-dot.inicio { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+.action-dot.nomejora { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.action-chip-info { flex: 1; min-width: 0; }
+.action-chip-title { color: var(--text); font-weight: 500; line-height: 1.3; }
+.action-chip-meta { color: var(--text3); font-size: 11px; margin-top: 2px; }
+.action-chip-edit {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 12px; padding: 2px 6px;
+  border-radius: 5px; transition: all var(--transition);
+}
+.action-chip-edit:hover { background: var(--surface2); color: var(--text); }
+
+/* Card footer */
+.ind-card-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-action-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  text-align: center;
+}
+.card-action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.card-action-btn.primary { background: rgba(108,99,255,0.1); color: var(--accent2); border-color: rgba(108,99,255,0.2); }
+.card-action-btn.primary:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── ACCIONES TABLE ── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-head {
+  display: grid;
+  padding: 12px 20px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.table-row {
+  display: grid;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background var(--transition);
+  font-size: 13px;
+}
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: var(--bg3); }
+.table-cols-actions { grid-template-columns: 1.5fr 2.5fr 1fr 0.8fr 0.8fr 1fr; gap: 12px; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.status-mejora { background: var(--green-dim); color: var(--green); }
+.status-inicio { background: var(--blue-dim); color: var(--blue); }
+.status-nomejora { background: var(--red-dim); color: var(--red); }
+
+/* ── SECTION VISIBILITY ── */
+.section { display: none; }
+.section.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.modal-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all var(--transition);
+}
+.modal-close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(255,95,126,0.3); }
+.modal-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
+
+/* Form */
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 7px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  transition: border var(--transition);
+  outline: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.form-select option { background: var(--bg2); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-footer {
+  display: flex; gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* Type selector */
+.type-selector { display: flex; gap: 10px; margin-bottom: 0; }
+.type-opt {
+  flex: 1; padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.type-opt:hover { border-color: var(--accent); color: var(--accent2); }
+.type-opt.selected {
+  background: rgba(108,99,255,0.12);
+  border-color: rgba(108,99,255,0.4);
+  color: var(--accent2);
+  box-shadow: inset 0 0 0 1px rgba(108,99,255,0.2);
+}
+.period-selector { display: flex; gap: 10px; }
+.period-opt {
+  flex: 1; padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.period-opt:hover { border-color: var(--green); color: var(--green); }
+.period-opt.selected {
+  background: var(--green-dim);
+  border-color: rgba(0,217,139,0.3);
+  color: var(--green);
+}
+
+/* Collab list */
+.collab-list-modal {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.collab-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  transition: background var(--transition);
+}
+.collab-list-item:last-child { border-bottom: none; }
+.collab-list-item:hover { background: var(--surface); }
+
+/* Loading */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px;
+  color: var(--text);
+}
+.loading-logo span { color: var(--accent); font-style: italic; }
+.loader {
+  width: 36px; height: 36px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 12px; color: var(--text3); letter-spacing: 0.5px; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+.empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state-text { font-size: 14px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* Tooltip */
+[data-tooltip] { position: relative; }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  border: 1px solid var(--border2);
+  z-index: 100;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .table-cols-actions { grid-template-columns: 1fr 2fr 1fr 1fr; }
+}
+</style>
 </head>
 <body>
 
 <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <span>Conectando con Supabase...</span>
+  <div class="loading-logo">Domo<span>Now</span></div>
+  <div class="loader"></div>
+  <div class="loading-text">Conectando con Supabase...</div>
 </div>
 
-<div class="dashboard-wrapper">
-    <aside class="sidebar">
-        <div class="logo"><span style="font-size:28px">📊</span><span>DomoNow</span></div>
-        <ul class="nav-menu">
-            <li class="nav-item"><a href="#" class="nav-link active" data-section="home"><span style="font-size:18px">🏠</span><span>Dashboard</span></a></li>
-            <li class="nav-item"><a href="#" class="nav-link" data-section="okrs"><span style="font-size:18px">🎯</span><span>OKRs</span></a></li>
-            <li class="nav-item"><a href="#" class="nav-link" data-section="kpis"><span style="font-size:18px">📈</span><span>KPIs</span></a></li>
-            <li class="nav-item"><a href="#" class="nav-link" data-section="acciones"><span style="font-size:18px">⚡</span><span>Acciones</span></a></li>
-        </ul>
-        <div style="position:absolute;bottom:24px;left:24px;right:24px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">MC</div>
-                <div style="color:rgba(255,255,255,0.9);font-size:12px;">
-                    <div style="font-weight:600;">Marco Carrasquilla</div>
-                    <div style="opacity:0.8;">CEO</div>
-                </div>
-            </div>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">DomoNow</div>
+        <div class="logo-sub">Intelligence Hub</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Vistas</div>
+    <a href="#" class="nav-link active" data-section="home">
+      <span class="nav-icon">🏠</span> Dashboard
+      <span class="nav-badge" id="badge-home">—</span>
+    </a>
+    <a href="#" class="nav-link" data-section="okrs">
+      <span class="nav-icon">🎯</span> OKRs
+      <span class="nav-badge" id="badge-okrs">—</span>
+    </a>
+    <a href="#" class="nav-link" data-section="kpis">
+      <span class="nav-icon">📈</span> KPIs
+      <span class="nav-badge" id="badge-kpis">—</span>
+    </a>
+    <a href="#" class="nav-link" data-section="acciones">
+      <span class="nav-icon">⚡</span> Acciones
+      <span class="nav-badge" id="badge-acciones">—</span>
+    </a>
+    <div class="nav-section-label" style="margin-top:8px;">Equipo</div>
+    <a href="#" class="nav-link" id="collabsNavBtn">
+      <span class="nav-icon">👥</span> Colaboradores
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">MC</div>
+    <div>
+      <div class="user-name">Marco Carrasquilla</div>
+      <div class="user-role">CEO</div>
+    </div>
+    <div class="user-status" data-tooltip="En línea"></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard <span>General</span></div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" id="manageCollabsBtn">👥 Equipo</button>
+      <button class="btn btn-primary" id="addBtn">＋ Nuevo Indicador</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <section id="home" class="section active">
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card" style="--card-accent:var(--purple);--card-bg:var(--purple-dim)">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="statOkrs">—</div>
+          <div class="stat-label">OKRs activos</div>
+          <div class="stat-delta delta-up" id="statOkrPct">—</div>
         </div>
-    </aside>
-
-    <main class="main-content">
-        <div class="header-bar">
-            <div class="header-title" id="pageTitle">📊 Dashboard por Área</div>
-            <div class="header-actions">
-                <button class="action-btn info" id="manageCollabsBtn">👥 Colaboradores</button>
-                <button class="action-btn success" id="addBtn">➕ Crear Indicador</button>
-            </div>
+        <div class="stat-card" style="--card-accent:var(--green);--card-bg:var(--green-dim)">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="statKpis">—</div>
+          <div class="stat-label">KPIs activos</div>
+          <div class="stat-delta delta-up" id="statKpiPct">—</div>
         </div>
-        <div class="alert info"><strong>📊 Gestión de Indicadores</strong> - Crea, edita y monitorea tus OKRs y KPIs por área y periodicidad. Asigna metas individuales en KPIs.</div>
-
-        <section id="home" class="section active">
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active" data-filter="area" data-value="all">📊 Todas</button>
-                    <button class="filter-btn" data-filter="area" data-value="fabrica">🏭 Fábrica</button>
-                    <button class="filter-btn" data-filter="area" data-value="marketing">📱 Marketing</button>
-                    <button class="filter-btn" data-filter="area" data-value="comercial">💼 Comercial</button>
-                    <button class="filter-btn" data-filter="area" data-value="servicio">🔧 Servicio</button>
-                </div>
-            </div>
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active" data-filter="period" data-value="all">📅 Todos</button>
-                    <button class="filter-btn" data-filter="period" data-value="semanal">📆 Semanal</button>
-                    <button class="filter-btn" data-filter="period" data-value="quincenal">📋 Quincenal</button>
-                    <button class="filter-btn" data-filter="period" data-value="mensual">📊 Mensual</button>
-                </div>
-            </div>
-            <div id="homeContent"></div>
-        </section>
-
-        <section id="okrs" class="section">
-            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">🎯 Objetivos y Resultados Clave (OKRs)</h2>
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active okr-area-filter" data-value="all">📊 Todas</button>
-                    <button class="filter-btn okr-area-filter" data-value="fabrica">🏭 Fábrica</button>
-                    <button class="filter-btn okr-area-filter" data-value="marketing">📱 Marketing</button>
-                    <button class="filter-btn okr-area-filter" data-value="comercial">💼 Comercial</button>
-                    <button class="filter-btn okr-area-filter" data-value="servicio">🔧 Servicio</button>
-                </div>
-            </div>
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active okr-period-filter" data-value="all">📅 Todos</button>
-                    <button class="filter-btn okr-period-filter" data-value="semanal">📆 Semanal</button>
-                    <button class="filter-btn okr-period-filter" data-value="quincenal">📋 Quincenal</button>
-                    <button class="filter-btn okr-period-filter" data-value="mensual">📊 Mensual</button>
-                </div>
-            </div>
-            <div id="okrsContent"></div>
-        </section>
-
-        <section id="kpis" class="section">
-            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">📈 Indicadores Clave de Rendimiento (KPIs)</h2>
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Área:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active kpi-area-filter" data-value="all">📊 Todas</button>
-                    <button class="filter-btn kpi-area-filter" data-value="fabrica">🏭 Fábrica</button>
-                    <button class="filter-btn kpi-area-filter" data-value="marketing">📱 Marketing</button>
-                    <button class="filter-btn kpi-area-filter" data-value="comercial">💼 Comercial</button>
-                    <button class="filter-btn kpi-area-filter" data-value="servicio">🔧 Servicio</button>
-                </div>
-            </div>
-            <div class="filters-row">
-                <strong style="width:100%;color:var(--text-primary);margin-bottom:8px;font-size:14px;">Filtrar por Periodicidad:</strong>
-                <div class="filter-group">
-                    <button class="filter-btn active kpi-period-filter" data-value="all">📅 Todos</button>
-                    <button class="filter-btn kpi-period-filter" data-value="semanal">📆 Semanal</button>
-                    <button class="filter-btn kpi-period-filter" data-value="quincenal">📋 Quincenal</button>
-                    <button class="filter-btn kpi-period-filter" data-value="mensual">📊 Mensual</button>
-                </div>
-            </div>
-            <div id="kpisContent"></div>
-        </section>
-
-        <section id="acciones" class="section">
-            <h2 style="margin-bottom:20px;color:var(--primary-color);font-size:18px;">⚡ Seguimiento de Acciones</h2>
-            <div id="accionesContent"></div>
-        </section>
-    </main>
-</div>
-
-<!-- Modal Indicador -->
-<div id="indicatorModal" class="modal">
-    <div class="modal-content">
-        <button class="modal-close">&times;</button>
-        <div class="modal-header"><span id="modalTitle">Crear Nuevo Indicador</span></div>
-        <form id="indicatorForm">
-            <div class="form-group">
-                <label>Tipo de Indicador *</label>
-                <div class="type-selector">
-                    <div class="type-option" data-type="okr">🎯 OKR</div>
-                    <div class="type-option" data-type="kpi">📈 KPI</div>
-                </div>
-                <input type="hidden" id="indicatorType" required />
-            </div>
-            <div class="form-group"><label>Nombre *</label><input type="text" id="indicatorName" required /></div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Área *</label>
-                    <select id="indicatorArea" required>
-                        <option value="">-- Seleccionar --</option>
-                        <option value="fabrica">🏭 Fábrica</option>
-                        <option value="marketing">📱 Marketing</option>
-                        <option value="comercial">💼 Comercial</option>
-                        <option value="servicio">🔧 Servicio</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Meta *</label><input type="number" step="0.1" id="indicatorTarget" required /></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Unidad *</label>
-                    <select id="indicatorUnit" required>
-                        <option value="">-- Seleccionar --</option>
-                        <option>% (Porcentaje)</option><option>Días</option><option>Cantidad</option><option>Horas</option><option>/10 (Puntuación)</option><option>USD</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Valor Actual</label><input type="number" step="0.1" id="indicatorCurrent" /></div>
-            </div>
-            <div class="form-group">
-                <label>Periodicidad *</label>
-                <div class="period-selector">
-                    <div class="type-option" data-period="semanal">📆 Semanal</div>
-                    <div class="type-option" data-period="quincenal">📋 Quincenal</div>
-                    <div class="type-option" data-period="mensual">📊 Mensual</div>
-                </div>
-                <input type="hidden" id="indicatorPeriod" required />
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn-delete-modal" id="deleteBtn" style="display:none;">🗑️ Eliminar</button>
-                <button type="button" class="btn-cancel">Cancelar</button>
-                <button type="submit" class="btn-submit">Guardar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Acción -->
-<div id="actionModal" class="modal">
-    <div class="modal-content">
-        <button class="modal-close" onclick="closeModalById('actionModal')">&times;</button>
-        <div class="modal-header"><span>Agregar Acción a: <span id="actionIndicatorName"></span></span></div>
-        <form id="actionForm">
-            <input type="hidden" id="actionIndicatorId" />
-            <div class="form-group"><label>Descripción de la Acción *</label><textarea id="actionDescription" rows="3" required></textarea></div>
-            <div class="form-row">
-                <div class="form-group"><label>Fecha *</label><input type="date" id="actionDate" required /></div>
-                <div class="form-group">
-                    <label>Estado de Evolución *</label>
-                    <select id="actionStatus" required>
-                        <option value="">-- Seleccionar --</option>
-                        <option value="inicio">🔵 En Inicio</option>
-                        <option value="mejora">✅ Mejora</option>
-                        <option value="nomejora">❌ Sin Mejora</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group"><label>Responsable</label><input type="text" id="actionResponsible" /></div>
-            <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="closeModalById('actionModal')">Cancelar</button>
-                <button type="submit" class="btn-submit">Registrar Acción</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Colaboradores Maestro -->
-<div id="masterCollabModal" class="modal">
-    <div class="modal-content">
-        <button class="modal-close">&times;</button>
-        <div class="modal-header"><span>👥 Gestionar Equipo</span></div>
-        <div class="alert info" style="margin-bottom:10px;padding:10px;">Define aquí la lista maestra de colaboradores para luego asignarlos a KPIs.</div>
-        <form id="masterCollabForm" style="display:flex;gap:8px;">
-            <input type="text" id="newCollabName" placeholder="Nombre completo del colaborador" required style="flex:1;padding:8px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
-            <button type="submit" class="action-btn success" style="padding:8px 12px;">Añadir</button>
-        </form>
-        <div class="master-collab-list" id="masterCollabList"></div>
-        <div class="form-actions" style="margin-top:15px;padding-top:10px;">
-            <button type="button" class="btn-cancel" onclick="closeModalById('masterCollabModal')">Cerrar</button>
+        <div class="stat-card" style="--card-accent:var(--amber);--card-bg:var(--amber-dim)">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="statAcciones">—</div>
+          <div class="stat-label">Acciones</div>
+          <div class="stat-delta delta-neutral" id="statAccPct">—</div>
         </div>
-    </div>
+        <div class="stat-card" style="--card-accent:var(--blue);--card-bg:var(--blue-dim)">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="statColabs">—</div>
+          <div class="stat-label">Colaboradores</div>
+          <div class="stat-delta delta-up">Equipo</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-label">Área</span>
+        <div class="chip active" data-filter="area" data-value="all">Todas</div>
+        <div class="chip" data-filter="area" data-value="fabrica">🏭 Fábrica</div>
+        <div class="chip" data-filter="area" data-value="marketing">📱 Marketing</div>
+        <div class="chip" data-filter="area" data-value="comercial">💼 Comercial</div>
+        <div class="chip" data-filter="area" data-value="servicio">🔧 Servicio</div>
+        <div class="chip-divider"></div>
+        <span class="filter-label">Período</span>
+        <div class="chip active" data-filter="period" data-value="all">Todos</div>
+        <div class="chip" data-filter="period" data-value="semanal">Semanal</div>
+        <div class="chip" data-filter="period" data-value="quincenal">Quincenal</div>
+        <div class="chip" data-filter="period" data-value="mensual">Mensual</div>
+      </div>
+      <div id="homeContent"></div>
+    </section>
+
+    <!-- OKRs -->
+    <section id="okrs" class="section">
+      <div class="filter-bar">
+        <span class="filter-label">Área</span>
+        <div class="chip active okr-area-f" data-value="all">Todas</div>
+        <div class="chip okr-area-f" data-value="fabrica">🏭 Fábrica</div>
+        <div class="chip okr-area-f" data-value="marketing">📱 Marketing</div>
+        <div class="chip okr-area-f" data-value="comercial">💼 Comercial</div>
+        <div class="chip okr-area-f" data-value="servicio">🔧 Servicio</div>
+        <div class="chip-divider"></div>
+        <div class="chip active okr-period-f" data-value="all">Todos</div>
+        <div class="chip okr-period-f" data-value="semanal">Semanal</div>
+        <div class="chip okr-period-f" data-value="quincenal">Quincenal</div>
+        <div class="chip okr-period-f" data-value="mensual">Mensual</div>
+      </div>
+      <div id="okrsContent"></div>
+    </section>
+
+    <!-- KPIs -->
+    <section id="kpis" class="section">
+      <div class="filter-bar">
+        <span class="filter-label">Área</span>
+        <div class="chip active kpi-area-f" data-value="all">Todas</div>
+        <div class="chip kpi-area-f" data-value="fabrica">🏭 Fábrica</div>
+        <div class="chip kpi-area-f" data-value="marketing">📱 Marketing</div>
+        <div class="chip kpi-area-f" data-value="comercial">💼 Comercial</div>
+        <div class="chip kpi-area-f" data-value="servicio">🔧 Servicio</div>
+        <div class="chip-divider"></div>
+        <div class="chip active kpi-period-f" data-value="all">Todos</div>
+        <div class="chip kpi-period-f" data-value="semanal">Semanal</div>
+        <div class="chip kpi-period-f" data-value="quincenal">Quincenal</div>
+        <div class="chip kpi-period-f" data-value="mensual">Mensual</div>
+      </div>
+      <div id="kpisContent"></div>
+    </section>
+
+    <!-- ACCIONES -->
+    <section id="acciones" class="section">
+      <div id="accionesContent"></div>
+    </section>
+
+  </div>
 </div>
 
-<!-- Modal Asignar KPI -->
-<div id="kpiAssignModal" class="modal">
-    <div class="modal-content" style="max-width:450px;">
-        <button class="modal-close">&times;</button>
-        <div class="modal-header"><span id="kpiAssignTitle">Asignar Meta Individual</span></div>
-        <form id="kpiAssignForm">
-            <input type="hidden" id="assignKpiId">
-            <input type="hidden" id="assignEditIndex">
-            <div class="form-group">
-                <label>Seleccionar Colaborador *</label>
-                <select id="assignCollabSelect" required><option value="">-- Seleccionar --</option></select>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Meta Individual *</label><input type="number" step="0.1" id="assignTarget" required></div>
-                <div class="form-group"><label>Resultado Actual</label><input type="number" step="0.1" id="assignCurrent"></div>
-            </div>
-            <div class="form-actions" style="margin-top:15px;padding-top:10px;">
-                <button type="button" class="btn-cancel" onclick="closeModalById('kpiAssignModal')">Cancelar</button>
-                <button type="submit" class="btn-submit" id="btnAssignSubmit">Asignar</button>
-            </div>
-        </form>
+<!-- MODAL: Indicador -->
+<div class="modal-overlay" id="indicatorModal">
+  <div class="modal">
+    <button class="modal-close" id="closeIndicatorModal">×</button>
+    <div class="modal-title" id="modalTitle">Nuevo Indicador</div>
+    <div class="modal-sub">Configura los parámetros del indicador</div>
+    <form id="indicatorForm">
+      <div class="form-group">
+        <div class="form-label">Tipo</div>
+        <div class="type-selector">
+          <div class="type-opt" data-type="okr">🎯 OKR</div>
+          <div class="type-opt" data-type="kpi">📈 KPI</div>
+        </div>
+        <input type="hidden" id="indicatorType" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input class="form-input" type="text" id="indicatorName" placeholder="Ej: Tasa de cierre mensual" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Área *</label>
+          <select class="form-select" id="indicatorArea" required>
+            <option value="">— Seleccionar —</option>
+            <option value="fabrica">🏭 Fábrica</option>
+            <option value="marketing">📱 Marketing</option>
+            <option value="comercial">💼 Comercial</option>
+            <option value="servicio">🔧 Servicio</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meta *</label>
+          <input class="form-input" type="number" step="0.1" id="indicatorTarget" placeholder="100" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unidad *</label>
+          <select class="form-select" id="indicatorUnit" required>
+            <option value="">— Seleccionar —</option>
+            <option>% (Porcentaje)</option><option>Días</option><option>Cantidad</option>
+            <option>Horas</option><option>/10 (Puntuación)</option><option>USD</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Actual</label>
+          <input class="form-input" type="number" step="0.1" id="indicatorCurrent" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Periodicidad *</div>
+        <div class="period-selector">
+          <div class="period-opt" data-period="semanal">📆 Semanal</div>
+          <div class="period-opt" data-period="quincenal">📋 Quincenal</div>
+          <div class="period-opt" data-period="mensual">📊 Mensual</div>
+        </div>
+        <input type="hidden" id="indicatorPeriod" required>
+      </div>
+      <div class="form-footer">
+        <button type="button" class="btn btn-danger" id="deleteIndBtn" style="display:none;margin-right:auto">🗑 Eliminar</button>
+        <button type="button" class="btn btn-ghost" id="cancelIndBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Acción -->
+<div class="modal-overlay" id="actionModal">
+  <div class="modal" id="actionModalContent">
+    <button class="modal-close" onclick="closeModal('actionModal')">×</button>
+    <div class="modal-title">Nueva Acción</div>
+    <div class="modal-sub">Registra una acción para <strong id="actionIndName"></strong></div>
+    <form id="actionForm">
+      <input type="hidden" id="actionIndId">
+      <div class="form-group">
+        <label class="form-label">Descripción *</label>
+        <textarea class="form-textarea" id="actionDesc" required placeholder="Describe la acción tomada..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input class="form-input" type="date" id="actionDate" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado *</label>
+          <select class="form-select" id="actionStatus" required>
+            <option value="">— Seleccionar —</option>
+            <option value="inicio">🔵 En Inicio</option>
+            <option value="mejora">✅ Mejora</option>
+            <option value="nomejora">❌ Sin Mejora</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Responsable</label>
+        <input class="form-input" type="text" id="actionResp" placeholder="Nombre del responsable">
+      </div>
+      <div class="form-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Colaboradores -->
+<div class="modal-overlay" id="collabModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('collabModal')">×</button>
+    <div class="modal-title">Equipo</div>
+    <div class="modal-sub">Gestiona la lista de colaboradores</div>
+    <form id="collabForm" style="display:flex;gap:8px;margin-bottom:4px;">
+      <input class="form-input" type="text" id="newCollabName" placeholder="Nombre completo" required style="flex:1">
+      <button type="submit" class="btn btn-success">Añadir</button>
+    </form>
+    <div class="collab-list-modal" id="collabListModal"></div>
+    <div class="form-footer">
+      <button type="button" class="btn btn-ghost" onclick="closeModal('collabModal')">Cerrar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: Asignar KPI -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('assignModal')">×</button>
+    <div class="modal-title" id="assignModalTitle">Asignar Meta</div>
+    <div class="modal-sub">Meta individual para este KPI</div>
+    <form id="assignForm">
+      <input type="hidden" id="assignKpiId">
+      <input type="hidden" id="assignEditIdx">
+      <div class="form-group">
+        <label class="form-label">Colaborador *</label>
+        <select class="form-select" id="assignCollabSel" required><option value="">— Seleccionar —</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Meta Individual *</label>
+          <input class="form-input" type="number" step="0.1" id="assignTarget" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Resultado Actual</label>
+          <input class="form-input" type="number" step="0.1" id="assignCurrent">
+        </div>
+      </div>
+      <div class="form-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('assignModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="assignSubmitBtn">Asignar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-// SUPABASE — credenciales hardcodeadas
-// ══════════════════════════════════════════════
 const SB_URL = 'https://shxtjywgecluhppkypit.supabase.co';
 const SB_KEY = 'sb_publishable_BpasnmRGD1Z5Kqps8o60Zw_k4iZS_ZW';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// ══════════════════════════════════════════════
-// ESTADO EN MEMORIA (sin localStorage)
-// ══════════════════════════════════════════════
-let indicators = [];
-let actions = [];
-let masterCollaborators = [];
-let kpiAssignments = {};
+// State
+let indicators = [], actions = [], masterCollaborators = [], kpiAssignments = {};
 let editingId = null;
-let currentAreaFilter = 'all';
-let currentPeriodFilter = 'all';
-let okrAreaFilter = 'all';
-let okrPeriodFilter = 'all';
-let kpiAreaFilter = 'all';
-let kpiPeriodFilter = 'all';
+let filters = { home: { area:'all', period:'all' }, okrs: { area:'all', period:'all' }, kpis: { area:'all', period:'all' } };
 
-// Datos base (siempre en memoria, no en DB — son los OKRs/KPIs predefinidos)
+const AREA_COLORS = { fabrica:'var(--blue)', marketing:'var(--purple)', comercial:'var(--amber)', servicio:'var(--green)' };
+const AREA_LABELS = { fabrica:'🏭 Fábrica', marketing:'📱 Marketing', comercial:'💼 Comercial', servicio:'🔧 Servicio' };
+
 const OKRsBase = [
-    { id: 'okr-1', name: '10 PH en vivo con 80% de módulos', area: 'fabrica', period: 'mensual', target: 10, unit: 'PH', current: 7, type: 'okr' },
-    { id: 'okr-2', name: '60% infraestructura TI sistematizada', area: 'fabrica', period: 'mensual', target: 60, unit: '%', current: 60, type: 'okr' },
-    { id: 'okr-3', name: '60% pruebas QA automatizadas', area: 'fabrica', period: 'semanal', target: 60, unit: '%', current: 48, type: 'okr' },
-    { id: 'okr-4', name: '80% satisfacción software', area: 'fabrica', period: 'mensual', target: 80, unit: '%', current: 0, type: 'okr' },
-    { id: 'okr-5', name: 'Equipo capacitado al 90%', area: 'marketing', period: 'mensual', target: 90, unit: '%', current: 90, type: 'okr' },
-    { id: 'okr-6', name: '80% material comercial optimizado', area: 'marketing', period: 'mensual', target: 80, unit: '%', current: 72, type: 'okr' },
-    { id: 'okr-7', name: 'Plan de mercadeo diseñado al 90%', area: 'marketing', period: 'quincenal', target: 90, unit: '%', current: 85, type: 'okr' },
-    { id: 'okr-8', name: 'Equipo Ventas certificado al 90%', area: 'comercial', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' },
-    { id: 'okr-9', name: '10 socios de negocio reclutados', area: 'comercial', period: 'mensual', target: 10, unit: 'socios', current: 10, type: 'okr' },
-    { id: 'okr-10', name: '80% socios capacitados', area: 'comercial', period: 'semanal', target: 80, unit: '%', current: 64, type: 'okr' },
-    { id: 'okr-11', name: '20 propiedades cerradas', area: 'comercial', period: 'mensual', target: 20, unit: 'propiedades', current: 16, type: 'okr' },
-    { id: 'okr-12', name: 'Equipo Servicio certificado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 88, type: 'okr' },
-    { id: 'okr-13', name: '80% PH implementadas con adopción', area: 'servicio', period: 'semanal', target: 80, unit: '%', current: 72, type: 'okr' },
-    { id: 'okr-14', name: 'BPO definido y negociado al 90%', area: 'servicio', period: 'mensual', target: 90, unit: '%', current: 85, type: 'okr' }
+  { id:'okr-1',  name:'10 PH en vivo con 80% de módulos',       area:'fabrica',   period:'mensual',   target:10,     unit:'PH',           current:7,      type:'okr' },
+  { id:'okr-2',  name:'60% infraestructura TI sistematizada',    area:'fabrica',   period:'mensual',   target:60,     unit:'%',            current:60,     type:'okr' },
+  { id:'okr-3',  name:'60% pruebas QA automatizadas',            area:'fabrica',   period:'semanal',   target:60,     unit:'%',            current:48,     type:'okr' },
+  { id:'okr-4',  name:'80% satisfacción software',               area:'fabrica',   period:'mensual',   target:80,     unit:'%',            current:0,      type:'okr' },
+  { id:'okr-5',  name:'Equipo capacitado al 90%',                area:'marketing', period:'mensual',   target:90,     unit:'%',            current:90,     type:'okr' },
+  { id:'okr-6',  name:'80% material comercial optimizado',       area:'marketing', period:'mensual',   target:80,     unit:'%',            current:72,     type:'okr' },
+  { id:'okr-7',  name:'Plan de mercadeo diseñado al 90%',        area:'marketing', period:'quincenal', target:90,     unit:'%',            current:85,     type:'okr' },
+  { id:'okr-8',  name:'Equipo Ventas certificado al 90%',        area:'comercial', period:'mensual',   target:90,     unit:'%',            current:85,     type:'okr' },
+  { id:'okr-9',  name:'10 socios de negocio reclutados',         area:'comercial', period:'mensual',   target:10,     unit:'socios',       current:10,     type:'okr' },
+  { id:'okr-10', name:'80% socios capacitados',                  area:'comercial', period:'semanal',   target:80,     unit:'%',            current:64,     type:'okr' },
+  { id:'okr-11', name:'20 propiedades cerradas',                 area:'comercial', period:'mensual',   target:20,     unit:'propiedades',  current:16,     type:'okr' },
+  { id:'okr-12', name:'Equipo Servicio certificado al 90%',      area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:88,     type:'okr' },
+  { id:'okr-13', name:'80% PH implementadas con adopción',       area:'servicio',  period:'semanal',   target:80,     unit:'%',            current:72,     type:'okr' },
+  { id:'okr-14', name:'BPO definido y negociado al 90%',         area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:85,     type:'okr' }
 ];
 const KPIsBase = [
-    { id: 'kpi-1', name: 'Cobertura de módulos funcionales', area: 'fabrica', period: 'semanal', target: 95, unit: '%', current: 92, type: 'kpi' },
-    { id: 'kpi-2', name: 'Defectos encontrados en QA', area: 'fabrica', period: 'semanal', target: 5, unit: 'Cantidad', current: 3, type: 'kpi' },
-    { id: 'kpi-3', name: 'Ciclo de desarrollo', area: 'fabrica', period: 'semanal', target: 14, unit: 'Días', current: 12, type: 'kpi' },
-    { id: 'kpi-4', name: 'Leads generados', area: 'marketing', period: 'quincenal', target: 50, unit: 'Cantidad', current: 45, type: 'kpi' },
-    { id: 'kpi-5', name: 'Tasa de apertura', area: 'marketing', period: 'semanal', target: 35, unit: '%', current: 32, type: 'kpi' },
-    { id: 'kpi-6', name: 'Pipeline de oportunidades', area: 'comercial', period: 'mensual', target: 500000, unit: 'USD', current: 450000, type: 'kpi' },
-    { id: 'kpi-7', name: 'Tasa de cierre', area: 'comercial', period: 'mensual', target: 35, unit: '%', current: 32, type: 'kpi' },
-    { id: 'kpi-8', name: 'Ciclo de implementación', area: 'servicio', period: 'semanal', target: 45, unit: 'Días', current: 42, type: 'kpi' },
-    { id: 'kpi-9', name: 'Tasa entregas puntual', area: 'servicio', period: 'semanal', target: 90, unit: '%', current: 88, type: 'kpi' }
+  { id:'kpi-1', name:'Cobertura de módulos funcionales', area:'fabrica',   period:'semanal',   target:95,     unit:'%',         current:92,    type:'kpi' },
+  { id:'kpi-2', name:'Defectos encontrados en QA',       area:'fabrica',   period:'semanal',   target:5,      unit:'Cantidad',  current:3,     type:'kpi' },
+  { id:'kpi-3', name:'Ciclo de desarrollo',              area:'fabrica',   period:'semanal',   target:14,     unit:'Días',      current:12,    type:'kpi' },
+  { id:'kpi-4', name:'Leads generados',                  area:'marketing', period:'quincenal', target:50,     unit:'Cantidad',  current:45,    type:'kpi' },
+  { id:'kpi-5', name:'Tasa de apertura',                 area:'marketing', period:'semanal',   target:35,     unit:'%',         current:32,    type:'kpi' },
+  { id:'kpi-6', name:'Pipeline de oportunidades',        area:'comercial', period:'mensual',   target:500000, unit:'USD',       current:450000,type:'kpi' },
+  { id:'kpi-7', name:'Tasa de cierre',                   area:'comercial', period:'mensual',   target:35,     unit:'%',         current:32,    type:'kpi' },
+  { id:'kpi-8', name:'Ciclo de implementación',          area:'servicio',  period:'semanal',   target:45,     unit:'Días',      current:42,    type:'kpi' },
+  { id:'kpi-9', name:'Tasa entregas puntual',            area:'servicio',  period:'semanal',   target:90,     unit:'%',         current:88,    type:'kpi' }
 ];
 
-// ══════════════════════════════════════════════
-// SUPABASE: CARGAR DATOS
-// ══════════════════════════════════════════════
-async function loadAllFromSupabase() {
-    try {
-        const [indRes, actRes, collabRes, assignRes] = await Promise.all([
-            sb.from('kpi_indicators').select('*'),
-            sb.from('kpi_actions').select('*'),
-            sb.from('kpi_collaborators').select('*'),
-            sb.from('kpi_assignments').select('*')
-        ]);
-        indicators = (indRes.data || []).map(r => ({
-            id: r.id, type: r.type, name: r.name, area: r.area,
-            target: r.target, unit: r.unit, current: r.current, period: r.period
-        }));
-        actions = (actRes.data || []).map(r => ({
-            id: r.id, indicatorId: r.indicator_id, title: r.title,
-            description: r.title, date: r.date, status: r.status, responsible: r.responsible
-        }));
-        masterCollaborators = (collabRes.data || []).map(r => r.name);
-        kpiAssignments = {};
-        (assignRes.data || []).forEach(r => {
-            if (!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id] = [];
-            kpiAssignments[r.kpi_id].push({ id: r.id, name: r.collab_name, target: r.target, current: r.current });
-        });
-    } catch(e) {
-        console.error('Error cargando datos:', e);
-    }
-}
-
-// ══════════════════════════════════════════════
-// SUPABASE: GUARDAR INDICADOR
-// ══════════════════════════════════════════════
-async function saveIndicatorToDB(data) {
-    if (editingId) {
-        // Buscar si es de base o personalizado
-        const isBase = [...OKRsBase, ...KPIsBase].some(i => i.id === editingId);
-        if (isBase) {
-            // Actualizar el objeto base en memoria
-            const baseArr = data.type === 'okr' ? OKRsBase : KPIsBase;
-            const idx = baseArr.findIndex(i => i.id === editingId);
-            if (idx !== -1) { baseArr[idx] = { ...baseArr[idx], ...data }; }
-            return true;
-        } else {
-            // Actualizar en Supabase
-            const { error } = await sb.from('kpi_indicators').update({
-                type: data.type, name: data.name, area: data.area,
-                target: data.target, unit: data.unit, current: data.current, period: data.period
-            }).eq('id', editingId);
-            if (error) { alert('Error: ' + error.message); return false; }
-            const idx = indicators.findIndex(i => i.id === editingId);
-            if (idx !== -1) indicators[idx] = data;
-            return true;
-        }
-    } else {
-        const { data: saved, error } = await sb.from('kpi_indicators').insert({
-            type: data.type, name: data.name, area: data.area,
-            target: data.target, unit: data.unit, current: data.current, period: data.period
-        }).select().single();
-        if (error) { alert('Error: ' + error.message); return false; }
-        indicators.push({ ...data, id: saved.id });
-        return true;
-    }
-}
-
-async function deleteIndicatorFromDB(id) {
-    const isBase = [...OKRsBase, ...KPIsBase].some(i => i.id === id);
-    if (isBase) { alert('No se pueden eliminar indicadores base.'); return false; }
-    const { error } = await sb.from('kpi_indicators').delete().eq('id', id);
-    if (error) { alert('Error: ' + error.message); return false; }
-    indicators = indicators.filter(i => i.id !== id);
-    return true;
-}
-
-// ══════════════════════════════════════════════
-// SUPABASE: GUARDAR ACCIÓN
-// ══════════════════════════════════════════════
-async function saveActionToDB(actionData) {
-    const { data: saved, error } = await sb.from('kpi_actions').insert({
-        indicator_id: actionData.indicatorId,
-        title: actionData.description,
-        date: actionData.date,
-        status: actionData.status,
-        responsible: actionData.responsible
-    }).select().single();
-    if (error) { alert('Error: ' + error.message); return false; }
-    actions.push({ ...actionData, id: saved.id, title: actionData.description });
-    return true;
-}
-
-async function updateActionInDB(actionId, data) {
-    const { error } = await sb.from('kpi_actions').update({
-        title: data.title, date: data.date, status: data.status, responsible: data.responsible
-    }).eq('id', actionId);
-    if (error) { alert('Error: ' + error.message); return false; }
-    const idx = actions.findIndex(a => a.id == actionId);
-    if (idx !== -1) { actions[idx] = { ...actions[idx], ...data, description: data.title }; }
-    return true;
-}
-
-async function deleteActionFromDB(actionId) {
-    const { error } = await sb.from('kpi_actions').delete().eq('id', actionId);
-    if (error) { alert('Error: ' + error.message); return false; }
-    actions = actions.filter(a => a.id != actionId);
-    return true;
-}
-
-// ══════════════════════════════════════════════
-// SUPABASE: COLABORADORES
-// ══════════════════════════════════════════════
-async function saveCollabToDB(name) {
-    const { error } = await sb.from('kpi_collaborators').insert({ name });
-    if (error) { alert('Error: ' + error.message); return false; }
-    masterCollaborators.push(name);
-    return true;
-}
-
-async function deleteCollabFromDB(name) {
-    const { error } = await sb.from('kpi_collaborators').delete().eq('name', name);
-    if (error) { alert('Error: ' + error.message); return false; }
-    masterCollaborators = masterCollaborators.filter(c => c !== name);
-    return true;
-}
-
-// ══════════════════════════════════════════════
-// SUPABASE: ASIGNACIONES KPI
-// ══════════════════════════════════════════════
-async function saveAssignmentToDB(kpiId, assignData) {
-    const { data: saved, error } = await sb.from('kpi_assignments').insert({
-        kpi_id: kpiId, collab_name: assignData.name,
-        target: assignData.target, current: assignData.current
-    }).select().single();
-    if (error) { alert('Error: ' + error.message); return false; }
-    if (!kpiAssignments[kpiId]) kpiAssignments[kpiId] = [];
-    kpiAssignments[kpiId].push({ ...assignData, id: saved.id });
-    return true;
-}
-
-async function updateAssignmentInDB(assignId, data) {
-    const { error } = await sb.from('kpi_assignments').update({
-        target: data.target, current: data.current
-    }).eq('id', assignId);
-    if (error) { alert('Error: ' + error.message); return false; }
-    return true;
-}
-
-async function deleteAssignmentFromDB(kpiId, index) {
-    const assign = kpiAssignments[kpiId][index];
-    if (!assign) return false;
-    const { error } = await sb.from('kpi_assignments').delete().eq('id', assign.id);
-    if (error) { alert('Error: ' + error.message); return false; }
-    kpiAssignments[kpiId].splice(index, 1);
-    return true;
-}
-
-// ══════════════════════════════════════════════
-// INICIALIZACIÓN
-// ══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadAllFromSupabase();
-    document.getElementById('loadingOverlay').style.display = 'none';
-    initializeNavigation();
-    initializeModals();
-    initializeFilters();
-    initializeCollabManagement();
-    renderAllSections();
-});
-
-function initializeNavigation() {
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section');
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(section).classList.add('active');
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-            const titles = { home: '📊 Dashboard por Área', okrs: '🎯 Objetivos y Resultados Clave', kpis: '📈 Indicadores Clave', acciones: '⚡ Seguimiento de Acciones' };
-            document.getElementById('pageTitle').textContent = titles[section];
-        });
+// ── Supabase ──────────────────────────────────
+async function loadAll() {
+  try {
+    const [i,a,c,as] = await Promise.all([
+      sb.from('kpi_indicators').select('*'),
+      sb.from('kpi_actions').select('*'),
+      sb.from('kpi_collaborators').select('*'),
+      sb.from('kpi_assignments').select('*')
+    ]);
+    indicators = (i.data||[]).map(r=>({id:r.id,type:r.type,name:r.name,area:r.area,target:r.target,unit:r.unit,current:r.current,period:r.period}));
+    actions = (a.data||[]).map(r=>({id:r.id,indicatorId:r.indicator_id,title:r.title,description:r.title,date:r.date,status:r.status,responsible:r.responsible}));
+    masterCollaborators = (c.data||[]).map(r=>r.name);
+    kpiAssignments = {};
+    (as.data||[]).forEach(r=>{
+      if(!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id]=[];
+      kpiAssignments[r.kpi_id].push({id:r.id,name:r.collab_name,target:r.target,current:r.current});
     });
+  } catch(e) { console.error(e); }
 }
 
-function initializeFilters() {
-    document.querySelectorAll('[data-filter="area"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="area"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentAreaFilter = this.getAttribute('data-value'); renderHome(); }); });
-    document.querySelectorAll('[data-filter="period"]').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('[data-filter="period"]').forEach(b => b.classList.remove('active')); this.classList.add('active'); currentPeriodFilter = this.getAttribute('data-value'); renderHome(); }); });
-    document.querySelectorAll('.okr-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrAreaFilter = this.getAttribute('data-value'); renderOKRs(); }); });
-    document.querySelectorAll('.okr-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.okr-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); okrPeriodFilter = this.getAttribute('data-value'); renderOKRs(); }); });
-    document.querySelectorAll('.kpi-area-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-area-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiAreaFilter = this.getAttribute('data-value'); renderKPIs(); }); });
-    document.querySelectorAll('.kpi-period-filter').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.kpi-period-filter').forEach(b => b.classList.remove('active')); this.classList.add('active'); kpiPeriodFilter = this.getAttribute('data-value'); renderKPIs(); }); });
-}
-
-function initializeModals() {
-    document.getElementById('addBtn').addEventListener('click', () => { editingId = null; openIndicatorModal(); });
-    document.querySelectorAll('.modal-close, .btn-cancel').forEach(btn => { btn.addEventListener('click', function() { this.closest('.modal').classList.remove('active'); }); });
-    document.querySelectorAll('.type-selector .type-option').forEach(option => { option.addEventListener('click', function() { const type = this.getAttribute('data-type'); if (type) { document.querySelectorAll('.type-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorType').value = type; } }); });
-    document.querySelectorAll('.period-selector .type-option').forEach(option => { option.addEventListener('click', function() { const period = this.getAttribute('data-period'); if (period) { document.querySelectorAll('.period-selector .type-option').forEach(o => o.classList.remove('selected')); this.classList.add('selected'); document.getElementById('indicatorPeriod').value = period; } }); });
-    document.getElementById('indicatorForm').addEventListener('submit', (e) => { e.preventDefault(); saveIndicator(); });
-    document.getElementById('deleteBtn').addEventListener('click', async () => { if (confirm('¿Confirmas la eliminación?')) { const ok = await deleteIndicatorFromDB(editingId); if (ok) { document.getElementById('indicatorModal').classList.remove('active'); renderAllSections(); } } });
-    document.getElementById('actionForm').addEventListener('submit', (e) => { e.preventDefault(); saveAction(); });
-    window.addEventListener('click', function(e) { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); });
-}
-
-function openIndicatorModal(indicator = null) {
-    editingId = indicator?.id || null;
-    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
-    if (indicator) {
-        document.getElementById('modalTitle').textContent = 'Editar Indicador';
-        document.getElementById('deleteBtn').style.display = 'block';
-        const typeOpt = document.querySelector(`.type-selector [data-type="${indicator.type}"]`);
-        if (typeOpt) typeOpt.classList.add('selected');
-        const periodOpt = document.querySelector(`.period-selector [data-period="${indicator.period}"]`);
-        if (periodOpt) periodOpt.classList.add('selected');
-        document.getElementById('indicatorType').value = indicator.type;
-        document.getElementById('indicatorName').value = indicator.name;
-        document.getElementById('indicatorArea').value = indicator.area;
-        document.getElementById('indicatorTarget').value = indicator.target;
-        document.getElementById('indicatorUnit').value = indicator.unit;
-        document.getElementById('indicatorCurrent').value = indicator.current || '';
-        document.getElementById('indicatorPeriod').value = indicator.period;
-    } else {
-        document.getElementById('modalTitle').textContent = 'Crear Nuevo Indicador';
-        document.getElementById('deleteBtn').style.display = 'none';
-        document.getElementById('indicatorForm').reset();
+async function saveIndicatorDB(data) {
+  if(editingId) {
+    const isBase = [...OKRsBase,...KPIsBase].some(i=>i.id===editingId);
+    if(isBase) {
+      const arr = data.type==='okr'?OKRsBase:KPIsBase;
+      const idx = arr.findIndex(i=>i.id===editingId);
+      if(idx!==-1) arr[idx]={...arr[idx],...data};
+      return true;
     }
-    document.getElementById('indicatorModal').classList.add('active');
+    const {error}=await sb.from('kpi_indicators').update({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).eq('id',editingId);
+    if(error){alert('Error: '+error.message);return false;}
+    const idx=indicators.findIndex(i=>i.id===editingId);
+    if(idx!==-1) indicators[idx]=data;
+    return true;
+  }
+  const {data:saved,error}=await sb.from('kpi_indicators').insert({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).select().single();
+  if(error){alert('Error: '+error.message);return false;}
+  indicators.push({...data,id:saved.id});
+  return true;
+}
+async function deleteIndicatorDB(id) {
+  if([...OKRsBase,...KPIsBase].some(i=>i.id===id)){alert('No se pueden eliminar indicadores base.');return false;}
+  const{error}=await sb.from('kpi_indicators').delete().eq('id',id);
+  if(error){alert('Error: '+error.message);return false;}
+  indicators=indicators.filter(i=>i.id!==id);
+  return true;
+}
+async function saveActionDB(d) {
+  const{data:saved,error}=await sb.from('kpi_actions').insert({indicator_id:d.indicatorId,title:d.description,date:d.date,status:d.status,responsible:d.responsible}).select().single();
+  if(error){alert('Error: '+error.message);return false;}
+  actions.push({...d,id:saved.id,title:d.description});
+  return true;
+}
+async function updateActionDB(id,d) {
+  const{error}=await sb.from('kpi_actions').update({title:d.title,date:d.date,status:d.status,responsible:d.responsible}).eq('id',id);
+  if(error){alert('Error: '+error.message);return false;}
+  const idx=actions.findIndex(a=>a.id==id);
+  if(idx!==-1) actions[idx]={...actions[idx],...d,description:d.title};
+  return true;
+}
+async function deleteActionDB(id) {
+  const{error}=await sb.from('kpi_actions').delete().eq('id',id);
+  if(error){alert('Error: '+error.message);return false;}
+  actions=actions.filter(a=>a.id!=id);
+  return true;
+}
+async function saveCollabDB(name) {
+  const{error}=await sb.from('kpi_collaborators').insert({name});
+  if(error){alert('Error: '+error.message);return false;}
+  masterCollaborators.push(name);
+  return true;
+}
+async function deleteCollabDB(name) {
+  const{error}=await sb.from('kpi_collaborators').delete().eq('name',name);
+  if(error){alert('Error: '+error.message);return false;}
+  masterCollaborators=masterCollaborators.filter(c=>c!==name);
+  return true;
+}
+async function saveAssignDB(kpiId,d) {
+  const{data:saved,error}=await sb.from('kpi_assignments').insert({kpi_id:kpiId,collab_name:d.name,target:d.target,current:d.current}).select().single();
+  if(error){alert('Error: '+error.message);return false;}
+  if(!kpiAssignments[kpiId]) kpiAssignments[kpiId]=[];
+  kpiAssignments[kpiId].push({...d,id:saved.id});
+  return true;
+}
+async function updateAssignDB(id,d) {
+  const{error}=await sb.from('kpi_assignments').update({target:d.target,current:d.current}).eq('id',id);
+  if(error){alert('Error: '+error.message);return false;}
+  return true;
+}
+async function deleteAssignDB(kpiId,idx) {
+  const a=kpiAssignments[kpiId][idx];
+  if(!a) return false;
+  const{error}=await sb.from('kpi_assignments').delete().eq('id',a.id);
+  if(error){alert('Error: '+error.message);return false;}
+  kpiAssignments[kpiId].splice(idx,1);
+  return true;
 }
 
-async function saveIndicator() {
-    const type = document.getElementById('indicatorType').value;
-    const period = document.getElementById('indicatorPeriod').value;
-    if (!type || !period) { alert('Selecciona tipo y periodicidad'); return; }
-    const data = {
-        id: editingId || null, type, name: document.getElementById('indicatorName').value,
-        area: document.getElementById('indicatorArea').value,
-        target: parseFloat(document.getElementById('indicatorTarget').value),
-        unit: document.getElementById('indicatorUnit').value,
-        current: parseFloat(document.getElementById('indicatorCurrent').value) || 0, period
-    };
-    const ok = await saveIndicatorToDB(data);
-    if (ok) {
-        document.getElementById('indicatorModal').classList.remove('active');
-        renderAllSections();
-    }
+// ── Modal helpers ─────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+
+// ── Render ────────────────────────────────────
+function getAll(type,area,period) {
+  return [...OKRsBase,...KPIsBase,...indicators].filter(i=>{
+    if(type && i.type!==type) return false;
+    if(area!=='all' && i.area!==area) return false;
+    if(period!=='all' && i.period!==period) return false;
+    return true;
+  });
 }
 
-function openActionModal(indicatorId, indicatorName) {
-    document.getElementById('actionIndicatorId').value = indicatorId;
-    document.getElementById('actionIndicatorName').textContent = indicatorName;
-    document.getElementById('actionDate').valueAsDate = new Date();
-    document.getElementById('actionForm').reset();
-    document.getElementById('actionModal').classList.add('active');
+function cardColor(ind) {
+  if(ind.type==='okr') return 'var(--purple)';
+  return AREA_COLORS[ind.area] || 'var(--accent)';
 }
 
-async function saveAction() {
-    const indicatorId = document.getElementById('actionIndicatorId').value;
-    const description = document.getElementById('actionDescription').value.trim();
-    const date = document.getElementById('actionDate').value;
-    const status = document.getElementById('actionStatus').value;
-    const responsible = document.getElementById('actionResponsible').value.trim();
-    if (!description || !date || !status) { alert('Completa todos los campos obligatorios'); return; }
-    const ok = await saveActionToDB({ indicatorId, description, date, status, responsible: responsible || 'No asignado' });
-    if (ok) {
-        document.getElementById('actionModal').classList.remove('active');
-        document.getElementById('actionForm').reset();
-        renderAllSections();
-    }
+function renderCard(ind) {
+  const pct = Math.min(Math.round((ind.current/ind.target)*100), 100);
+  const color = cardColor(ind);
+  const assigns = kpiAssignments[ind.id] || [];
+  const relActions = actions.filter(a=>a.indicatorId===ind.id);
+  const pctColor = pct>=80 ? 'var(--green)' : pct>=50 ? 'var(--amber)' : 'var(--red)';
+
+  let collabsHtml = '';
+  if(ind.type==='kpi') {
+    const rows = assigns.map((a,i)=>{
+      const ap = a.target>0 ? Math.min(Math.round((a.current/a.target)*100),100) : 0;
+      const initials = a.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      return `<div class="collab-row">
+        <div class="collab-avatar">${initials}</div>
+        <div class="collab-info">
+          <div class="collab-name">${a.name}</div>
+          <div class="collab-val">${a.current} / ${a.target} ${ind.unit}</div>
+        </div>
+        <div class="collab-mini-bar-wrap"><div class="collab-mini-fill" style="width:${ap}%;background:${color}"></div></div>
+        <span class="collab-pct" style="color:${color}">${ap}%</span>
+        <div class="collab-actions">
+          <button class="icon-btn edit-indiv-btn" data-kpiid="${ind.id}" data-kpiname="${ind.name}" data-idx="${i}" title="Editar">✏️</button>
+          <button class="icon-btn del delete-indiv-btn" data-kpiid="${ind.id}" data-idx="${i}" title="Eliminar">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    collabsHtml = `<div class="ind-collabs">
+      <div class="ind-collabs-header">
+        <span class="ind-collabs-title">👤 Desempeño Individual</span>
+        <button class="btn btn-ghost assign-collab-btn" style="padding:4px 10px;font-size:11px" data-id="${ind.id}" data-name="${ind.name}">＋ Asignar</button>
+      </div>
+      ${assigns.length ? rows : '<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px">Sin asignaciones — haz clic en Asignar</div>'}
+    </div>`;
+  }
+
+  let actionsHtml = '';
+  if(relActions.length) {
+    const chips = relActions.map(a=>`
+      <div class="action-chip">
+        <div class="action-dot ${a.status||'inicio'}"></div>
+        <div class="action-chip-info">
+          <div class="action-chip-title">${a.title||a.description}</div>
+          <div class="action-chip-meta">📅 ${a.date||'Sin fecha'} · 👤 ${a.responsible||'Sin asignar'}</div>
+        </div>
+        <button class="action-chip-edit edit-action-btn" data-id="${a.id}">✏️</button>
+      </div>`).join('');
+    actionsHtml = `<div class="ind-actions-section">
+      <div class="ind-actions-header">
+        <span class="ind-actions-title">⚡ Acciones <span style="background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-size:10px">${relActions.length}</span></span>
+      </div>
+      ${chips}
+    </div>`;
+  }
+
+  return `<div class="ind-card" style="--card-color:${color}" data-id="${ind.id}">
+    <div class="ind-card-accent" style="background:${color}"></div>
+    <div class="ind-card-body">
+      <div class="ind-card-top">
+        <div>
+          <div class="ind-badges">
+            <span class="badge badge-${ind.type}">${ind.type.toUpperCase()}</span>
+            <span class="badge badge-period">${ind.period}</span>
+            <span class="badge badge-area">${AREA_LABELS[ind.area]||ind.area}</span>
+          </div>
+          <div class="ind-title" style="margin-top:10px">${ind.name}</div>
+          <div class="ind-meta">
+            <span style="font-family:'Instrument Serif',serif;font-size:14px;color:var(--text)">${ind.current.toLocaleString()}</span>
+            <span style="color:var(--border2)">/</span>
+            <span>${ind.target.toLocaleString()} ${ind.unit}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Instrument Serif',serif;font-size:28px;color:${pctColor};line-height:1">${pct}%</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">progreso</div>
+        </div>
+      </div>
+      <div class="ind-progress-wrap">
+        <div class="ind-progress-bar-wrap">
+          <div class="ind-progress-fill" style="width:${pct}%;background:${color}" data-pct="${pct}"></div>
+        </div>
+        <span class="ind-progress-label" style="color:${pctColor}">${pct}%</span>
+      </div>
+      ${collabsHtml}
+      ${actionsHtml}
+    </div>
+    <div class="ind-card-footer">
+      <button class="card-action-btn btn-edit-ind" data-id="${ind.id}">✏️ Editar</button>
+      <button class="card-action-btn primary btn-add-action" data-id="${ind.id}">⚡ Acción</button>
+    </div>
+  </div>`;
 }
 
-// ══════════════════════════════════════════════
-// RENDERIZADO
-// ══════════════════════════════════════════════
-function renderAllSections() { renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); }
-
-function getFilteredIndicators(type, areaFilter, periodFilter) {
-    const all = [...OKRsBase, ...KPIsBase, ...indicators];
-    return all.filter(ind => {
-        if (type && ind.type !== type) return false;
-        if (areaFilter !== 'all' && ind.area !== areaFilter) return false;
-        if (periodFilter !== 'all' && ind.period !== periodFilter) return false;
-        return true;
-    });
+function renderGroup(title, items, containerId) {
+  if(!items.length) {
+    document.getElementById(containerId).innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No hay indicadores para esta vista</div></div>`;
+    return;
+  }
+  const okrs = items.filter(i=>i.type==='okr');
+  const kpis = items.filter(i=>i.type==='kpi');
+  let html = '';
+  if(okrs.length) {
+    html += `<div class="section-header"><div class="section-title">🎯 Objetivos <span class="section-count">${okrs.length}</span></div></div>`;
+    html += `<div class="cards-grid">${okrs.map(renderCard).join('')}</div>`;
+  }
+  if(kpis.length) {
+    html += `<div class="section-header" style="margin-top:${okrs.length?'8px':'0'}"><div class="section-title">📈 KPIs <span class="section-count">${kpis.length}</span></div></div>`;
+    html += `<div class="cards-grid">${kpis.map(renderCard).join('')}</div>`;
+  }
+  document.getElementById(containerId).innerHTML = html;
+  attachCardEvents(containerId);
 }
 
 function renderHome() {
-    const filtered = getFilteredIndicators(null, currentAreaFilter, currentPeriodFilter);
-    const okrs = filtered.filter(i => i.type === 'okr');
-    const kpis = filtered.filter(i => i.type === 'kpi');
-    let html = '';
-    if (okrs.length > 0) { html += `<h3 style="margin-top:24px;margin-bottom:16px;color:var(--okr-color);font-size:16px;">🎯 OKRs (${okrs.length})</h3>`; okrs.forEach(ind => html += renderIndicatorCard(ind)); }
-    if (kpis.length > 0) { html += `<h3 style="margin-top:24px;margin-bottom:16px;color:var(--kpi-color);font-size:16px;">📈 KPIs (${kpis.length})</h3>`; kpis.forEach(ind => html += renderIndicatorCard(ind)); }
-    if (!filtered.length) html = '<div class="empty-state">No hay indicadores para esta vista</div>';
-    document.getElementById('homeContent').innerHTML = html;
-    attachIndicatorEvents();
+  renderGroup('Dashboard', getAll(null, filters.home.area, filters.home.period), 'homeContent');
 }
-
 function renderOKRs() {
-    const filtered = getFilteredIndicators('okr', okrAreaFilter, okrPeriodFilter);
-    let html = filtered.length ? filtered.map(ind => renderIndicatorCard(ind)).join('') : '<div class="empty-state">No hay OKRs para esta vista</div>';
-    document.getElementById('okrsContent').innerHTML = html;
-    attachIndicatorEvents();
+  const items = getAll('okr', filters.okrs.area, filters.okrs.period);
+  const el = document.getElementById('okrsContent');
+  if(!items.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">No hay OKRs</div></div>`; return; }
+  el.innerHTML = `<div class="cards-grid">${items.map(renderCard).join('')}</div>`;
+  attachCardEvents('okrsContent');
 }
-
 function renderKPIs() {
-    const filtered = getFilteredIndicators('kpi', kpiAreaFilter, kpiPeriodFilter);
-    let html = filtered.length ? filtered.map(ind => renderIndicatorCard(ind)).join('') : '<div class="empty-state">No hay KPIs para esta vista</div>';
-    document.getElementById('kpisContent').innerHTML = html;
-    attachIndicatorEvents();
+  const items = getAll('kpi', filters.kpis.area, filters.kpis.period);
+  const el = document.getElementById('kpisContent');
+  if(!items.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">No hay KPIs</div></div>`; return; }
+  el.innerHTML = `<div class="cards-grid">${items.map(renderCard).join('')}</div>`;
+  attachCardEvents('kpisContent');
 }
-
 function renderAcciones() {
-    if (!actions.length) { document.getElementById('accionesContent').innerHTML = '<div class="empty-state">No hay acciones registradas</div>'; return; }
-    let html = `<div><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <thead style="text-align:left;color:var(--text-secondary);background:var(--bg-light);">
-        <tr>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Indicador</th>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Descripción</th>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Responsable</th>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Fecha</th>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);">Estado</th>
-            <th style="padding:12px 14px;border-bottom:2px solid var(--border-color);text-align:center;">Acciones</th>
-        </tr></thead><tbody>`;
-    actions.forEach(action => {
-        const statusEmoji = action.status === 'mejora' ? '✅' : action.status === 'inicio' ? '🔵' : '❌';
-        html += `<tr style="border-bottom:1px solid var(--border-color);">
-            <td style="padding:10px 14px;">${action.indicatorId}</td>
-            <td style="padding:10px 14px;">${action.title || action.description || ''}</td>
-            <td style="padding:10px 14px;">${action.responsible || 'No asignado'}</td>
-            <td style="padding:10px 14px;">${action.date ? new Date(action.date + 'T00:00:00').toLocaleDateString('es-CO') : ''}</td>
-            <td style="padding:10px 14px;">${statusEmoji} ${action.status || ''}</td>
-            <td style="padding:10px 14px;text-align:center;">
-                <button class="edit-action-table-btn" data-id="${action.id}" style="background:var(--primary-color);color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin-right:4px;">✏️ Editar</button>
-                <button class="delete-action-table-btn" data-id="${action.id}" style="background:var(--danger-color);color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;">🗑️ Eliminar</button>
-            </td>
-        </tr>`;
+  const el = document.getElementById('accionesContent');
+  if(!actions.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-text">No hay acciones registradas</div></div>`; return; }
+  const rows = actions.map(a=>{
+    const ind = [...OKRsBase,...KPIsBase,...indicators].find(i=>i.id===a.indicatorId);
+    const indName = ind ? ind.name : a.indicatorId;
+    return `<div class="table-row table-cols-actions">
+      <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${indName}">${indName}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title||''}">${a.title||a.description||''}</div>
+      <div style="color:var(--text2)">${a.responsible||'—'}</div>
+      <div style="color:var(--text3);font-size:12px">${a.date?new Date(a.date+'T00:00:00').toLocaleDateString('es-CO'):''}</div>
+      <div><span class="status-pill status-${a.status||'inicio'}">${a.status==='mejora'?'✅ Mejora':a.status==='inicio'?'🔵 Inicio':'❌ Sin Mejora'}</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost edit-action-table" data-id="${a.id}" style="padding:5px 10px;font-size:11px">✏️</button>
+        <button class="btn btn-danger del-action-table" data-id="${a.id}" style="padding:5px 10px;font-size:11px">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="table-wrap">
+    <div class="table-head table-cols-actions">
+      <span>Indicador</span><span>Descripción</span><span>Responsable</span><span>Fecha</span><span>Estado</span><span>Acciones</span>
+    </div>${rows}
+  </div>`;
+  el.querySelectorAll('.edit-action-table').forEach(btn=>{
+    btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
+  });
+  el.querySelectorAll('.del-action-table').forEach(btn=>{
+    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta acción?')){ await deleteActionDB(btn.dataset.id); renderAll(); } });
+  });
+}
+function renderAll() {
+  renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); updateBadges(); updateStats();
+}
+function updateBadges() {
+  const all = [...OKRsBase,...KPIsBase,...indicators];
+  document.getElementById('badge-home').textContent = all.length;
+  document.getElementById('badge-okrs').textContent = all.filter(i=>i.type==='okr').length;
+  document.getElementById('badge-kpis').textContent = all.filter(i=>i.type==='kpi').length;
+  document.getElementById('badge-acciones').textContent = actions.length;
+}
+function updateStats() {
+  const all = [...OKRsBase,...KPIsBase,...indicators];
+  const okrs = all.filter(i=>i.type==='okr');
+  const kpis = all.filter(i=>i.type==='kpi');
+  const avgOkr = okrs.length ? Math.round(okrs.reduce((s,i)=>s+Math.min((i.current/i.target)*100,100),0)/okrs.length) : 0;
+  const avgKpi = kpis.length ? Math.round(kpis.reduce((s,i)=>s+Math.min((i.current/i.target)*100,100),0)/kpis.length) : 0;
+  const mejoras = actions.filter(a=>a.status==='mejora').length;
+  document.getElementById('statOkrs').textContent = okrs.length;
+  document.getElementById('statOkrPct').textContent = avgOkr+'% avg';
+  document.getElementById('statKpis').textContent = kpis.length;
+  document.getElementById('statKpiPct').textContent = avgKpi+'% avg';
+  document.getElementById('statAcciones').textContent = actions.length;
+  document.getElementById('statAccPct').textContent = mejoras+' mejoras';
+  document.getElementById('statColabs').textContent = masterCollaborators.length;
+}
+
+function attachCardEvents(containerId) {
+  const el = document.getElementById(containerId);
+  el.querySelectorAll('.btn-edit-ind').forEach(btn=>{
+    btn.addEventListener('click',()=>{ const id=btn.dataset.id; const ind=[...OKRsBase,...KPIsBase,...indicators].find(i=>i.id==id); if(ind) openIndicatorModal(ind); });
+  });
+  el.querySelectorAll('.btn-add-action').forEach(btn=>{
+    btn.addEventListener('click',()=>{ const id=btn.dataset.id; const ind=[...OKRsBase,...KPIsBase,...indicators].find(i=>i.id==id); if(ind) openActionModal(id,ind.name); });
+  });
+  el.querySelectorAll('.assign-collab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{ if(!masterCollaborators.length){alert('Primero agrega colaboradores en 👥 Equipo');return;} openAssignModal(btn.dataset.id,btn.dataset.name); });
+  });
+  el.querySelectorAll('.edit-indiv-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{ openAssignModal(btn.dataset.kpiid,btn.dataset.kpiname,btn.dataset.idx); });
+  });
+  el.querySelectorAll('.delete-indiv-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta asignación?')){ await deleteAssignDB(btn.dataset.kpiid,btn.dataset.idx); renderAll(); } });
+  });
+  el.querySelectorAll('.edit-action-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
+  });
+  // Animate progress bars
+  requestAnimationFrame(()=>{
+    el.querySelectorAll('.ind-progress-fill').forEach(bar=>{
+      const w = bar.dataset.pct + '%';
+      bar.style.width = '0';
+      setTimeout(()=>{ bar.style.width = w; }, 100);
     });
-    html += '</tbody></table></div>';
-    document.getElementById('accionesContent').innerHTML = html;
-    document.querySelectorAll('.edit-action-table-btn').forEach(btn => { btn.addEventListener('click', function() { const a = actions.find(x => x.id == this.getAttribute('data-id')); if (a) openActionEditModal(a); }); });
-    document.querySelectorAll('.delete-action-table-btn').forEach(btn => { btn.addEventListener('click', function() { deleteActionItem(this.getAttribute('data-id')); }); });
+  });
 }
 
-function renderIndicatorCard(indicator) {
-    const pct = Math.min((indicator.current / indicator.target) * 100, 100);
-    const color = indicator.type === 'okr' ? '#8B5CF6' : '#06A77D';
-    let cardHtml = `<div class="indicator-card" data-id="${indicator.id}">
-        <div class="indicator-header"><div>
-            <div class="indicator-badges">
-                <span class="badge ${indicator.type}">${indicator.type.toUpperCase()}</span>
-                <span class="badge period">${indicator.period}</span>
-            </div>
-            <div class="indicator-title">${indicator.name}</div>
-            <div class="indicator-meta">${indicator.current}/${indicator.target} ${indicator.unit}</div>
-        </div></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
-        <div class="progress-text">${Math.round(pct)}% de progreso</div>`;
-
-    if (indicator.type === 'kpi') {
-        const assigns = kpiAssignments[indicator.id] || [];
-        cardHtml += `<div class="kpi-collabs-section">
-            <div class="kpi-collabs-header">
-                <span class="kpi-collabs-title">👤 Desempeño Individual</span>
-                <button class="btn-small assign-collab-btn" style="padding:4px 8px;font-size:11px;background:var(--info-color);color:white;border:none;border-radius:5px;cursor:pointer;"
-                    data-id="${indicator.id}" data-name="${indicator.name}">+ Asignar</button>
-            </div>
-            <div class="kpi-collabs-list">
-            ${assigns.length === 0
-                ? '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;padding:5px;">Sin asignaciones individuales</div>'
-                : assigns.map((assign, index) => {
-                    const indivPct = assign.target > 0 ? Math.round((assign.current / assign.target) * 100) : 0;
-                    return `<div class="collab-individual-card">
-                        <div class="collab-indiv-info">
-                            <div class="collab-indiv-name">${assign.name}</div>
-                            <div class="collab-indiv-meta">${assign.current} / ${assign.target}</div>
-                        </div>
-                        <div class="collab-indiv-performance">
-                            <span class="collab-indiv-pct">${indivPct}%</span>
-                            <div style="display:flex;flex-direction:column;gap:2px">
-                                <button class="btn-icon edit-indiv-btn" data-kpiid="${indicator.id}" data-kpiname="${indicator.name}" data-index="${index}">✏️</button>
-                                <button class="btn-icon delete delete-indiv-btn" data-kpiid="${indicator.id}" data-index="${index}">✕</button>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('')
-            }
-            </div>
-        </div>`;
-    }
-
-    const relatedActions = actions.filter(a => a.indicatorId === indicator.id);
-    if (relatedActions.length > 0) {
-        cardHtml += `<div class="actions-section">
-            <div class="actions-header"><span class="actions-title">⚡ Acciones (${relatedActions.length})</span></div>
-            <div class="actions-list">
-            ${relatedActions.map(action => `
-                <div class="action-item-card">
-                    <div class="action-item-info">
-                        <div class="action-item-title">${action.title || action.description}</div>
-                        <div class="action-item-meta">Fecha: ${action.date || 'Sin fecha'}</div>
-                        <div class="action-item-responsible">👤 ${action.responsible || 'No asignado'}</div>
-                    </div>
-                    <div class="action-item-actions">
-                        <button class="btn-icon-action edit-action-btn" data-id="${action.id}">✏️ Editar</button>
-                    </div>
-                </div>`).join('')}
-            </div>
-        </div>`;
-    }
-
-    cardHtml += `<div class="indicator-actions">
-        <button class="btn-small btn-edit" data-id="${indicator.id}">✏️ Editar</button>
-        <button class="btn-small btn-action" data-id="${indicator.id}">⚡ Agregar Acción</button>
-    </div></div>`;
-    return cardHtml;
+// ── Modals ────────────────────────────────────
+function openIndicatorModal(ind=null) {
+  editingId = ind?.id || null;
+  document.querySelectorAll('.type-opt,.period-opt').forEach(o=>o.classList.remove('selected'));
+  if(ind) {
+    document.getElementById('modalTitle').textContent = 'Editar Indicador';
+    document.getElementById('deleteIndBtn').style.display = 'inline-flex';
+    document.querySelector(`.type-opt[data-type="${ind.type}"]`)?.classList.add('selected');
+    document.querySelector(`.period-opt[data-period="${ind.period}"]`)?.classList.add('selected');
+    document.getElementById('indicatorType').value = ind.type;
+    document.getElementById('indicatorName').value = ind.name;
+    document.getElementById('indicatorArea').value = ind.area;
+    document.getElementById('indicatorTarget').value = ind.target;
+    document.getElementById('indicatorUnit').value = ind.unit;
+    document.getElementById('indicatorCurrent').value = ind.current||'';
+    document.getElementById('indicatorPeriod').value = ind.period;
+  } else {
+    document.getElementById('modalTitle').textContent = 'Nuevo Indicador';
+    document.getElementById('deleteIndBtn').style.display = 'none';
+    document.getElementById('indicatorForm').reset();
+  }
+  openModal('indicatorModal');
 }
 
-function attachIndicatorEvents() {
-    document.querySelectorAll('.btn-edit').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id == id); if (indicator) openIndicatorModal(indicator); }); });
-    document.querySelectorAll('.btn-action').forEach(btn => { btn.addEventListener('click', function() { const id = this.getAttribute('data-id'); const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id == id); if (indicator) openActionModal(id, indicator.name); }); });
-    document.querySelectorAll('.assign-collab-btn').forEach(btn => { btn.addEventListener('click', function() { if (!masterCollaborators.length) { alert('Primero agrega colaboradores en 👥 Colaboradores'); return; } openKpiAssignModal(this.getAttribute('data-id'), this.getAttribute('data-name')); }); });
-    document.querySelectorAll('.edit-indiv-btn').forEach(btn => { btn.addEventListener('click', function() { openKpiAssignModal(this.getAttribute('data-kpiid'), this.getAttribute('data-kpiname'), this.getAttribute('data-index')); }); });
-    document.querySelectorAll('.delete-indiv-btn').forEach(btn => { btn.addEventListener('click', function() { deleteKpiAssignmentItem(this.getAttribute('data-kpiid'), this.getAttribute('data-index')); }); });
-    document.querySelectorAll('.edit-action-btn').forEach(btn => { btn.addEventListener('click', function() { const a = actions.find(x => x.id == this.getAttribute('data-id')); if (a) openActionEditModal(a); }); });
+function openActionModal(indId, indName) {
+  document.getElementById('actionIndId').value = indId;
+  document.getElementById('actionIndName').textContent = indName;
+  document.getElementById('actionDate').valueAsDate = new Date();
+  document.getElementById('actionForm').reset();
+  document.getElementById('actionIndId').value = indId;
+  openModal('actionModal');
 }
 
-// ══════════════════════════════════════════════
-// COLABORADORES
-// ══════════════════════════════════════════════
-function initializeCollabManagement() {
-    document.getElementById('manageCollabsBtn').addEventListener('click', openMasterCollabModal);
-    document.getElementById('masterCollabForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const name = document.getElementById('newCollabName').value.trim();
-        if (!name) return;
-        if (masterCollaborators.includes(name)) { alert('Este colaborador ya existe.'); return; }
-        const ok = await saveCollabToDB(name);
-        if (ok) { document.getElementById('newCollabName').value = ''; renderMasterCollabList(); }
-    });
-    document.getElementById('kpiAssignForm').addEventListener('submit', function(e) { e.preventDefault(); saveKpiAssignment(); });
-}
-
-function openMasterCollabModal() { renderMasterCollabList(); document.getElementById('masterCollabModal').classList.add('active'); }
-
-function renderMasterCollabList() {
-    const list = document.getElementById('masterCollabList');
-    if (!masterCollaborators.length) { list.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-tertiary);font-size:12px;">No hay colaboradores registrados.</div>'; return; }
-    list.innerHTML = masterCollaborators.map((name, index) => `
-        <div class="master-collab-item">
-            <span>${name}</span>
-            <button class="btn-icon delete" onclick="deleteMasterCollab('${name}')">✕</button>
-        </div>`).join('');
-}
-
-async function deleteMasterCollab(name) {
-    if (confirm('¿Eliminar este colaborador de la lista maestra?')) {
-        const ok = await deleteCollabFromDB(name);
-        if (ok) renderMasterCollabList();
-    }
-}
-
-function openKpiAssignModal(kpiId, kpiName, collabEditIndex = null) {
-    document.getElementById('assignKpiId').value = kpiId;
-    document.getElementById('assignEditIndex').value = collabEditIndex !== null ? collabEditIndex : '';
-    document.getElementById('kpiAssignTitle').textContent = collabEditIndex !== null ? 'Editar Meta Individual' : `Asignar a: ${kpiName}`;
-    document.getElementById('btnAssignSubmit').textContent = collabEditIndex !== null ? 'Actualizar' : 'Asignar';
-    const select = document.getElementById('assignCollabSelect');
-    select.innerHTML = '<option value="">-- Seleccionar --</option>';
-    masterCollaborators.forEach(name => { select.innerHTML += `<option value="${name}">${name}</option>`; });
-    document.getElementById('kpiAssignForm').reset();
-    document.getElementById('assignKpiId').value = kpiId;
-    document.getElementById('assignEditIndex').value = collabEditIndex !== null ? collabEditIndex : '';
-    if (collabEditIndex !== null) {
-        const assignment = kpiAssignments[kpiId][collabEditIndex];
-        document.getElementById('assignCollabSelect').value = assignment.name;
-        document.getElementById('assignCollabSelect').disabled = true;
-        document.getElementById('assignTarget').value = assignment.target;
-        document.getElementById('assignCurrent').value = assignment.current || '';
-    } else {
-        document.getElementById('assignCollabSelect').disabled = false;
-    }
-    document.getElementById('kpiAssignModal').classList.add('active');
-}
-
-async function saveKpiAssignment() {
-    const kpiId = document.getElementById('assignKpiId').value;
-    const editIndex = document.getElementById('assignEditIndex').value;
-    const assignData = {
-        name: document.getElementById('assignCollabSelect').value,
-        target: parseFloat(document.getElementById('assignTarget').value),
-        current: parseFloat(document.getElementById('assignCurrent').value) || 0
-    };
-    if (!assignData.name) { alert('Selecciona un colaborador.'); return; }
-    if (editIndex !== '') {
-        const assign = kpiAssignments[kpiId][editIndex];
-        const ok = await updateAssignmentInDB(assign.id, assignData);
-        if (ok) { kpiAssignments[kpiId][editIndex] = { ...assign, ...assignData }; }
-    } else {
-        const exists = (kpiAssignments[kpiId] || []).some(a => a.name === assignData.name);
-        if (exists) { alert('Este colaborador ya está asignado.'); return; }
-        await saveAssignmentToDB(kpiId, assignData);
-    }
-    closeModalById('kpiAssignModal');
-    renderAllSections();
-}
-
-async function deleteKpiAssignmentItem(kpiId, index) {
-    if (confirm('¿Eliminar esta asignación individual?')) {
-        const ok = await deleteAssignmentFromDB(kpiId, index);
-        if (ok) renderAllSections();
-    }
-}
-
-// ══════════════════════════════════════════════
-// ACCIONES — EDITAR / ELIMINAR
-// ══════════════════════════════════════════════
 function openActionEditModal(action) {
-    const indicator = [...OKRsBase, ...KPIsBase, ...indicators].find(i => i.id === action.indicatorId);
-    const indicatorName = indicator ? indicator.name : action.indicatorId;
-    const modalContent = document.querySelector('#actionModal .modal-content');
-    modalContent.innerHTML = `
-        <button class="modal-close" onclick="closeModalById('actionModal')">×</button>
-        <div class="modal-header"><span>✏️ Editar Acción — ${indicatorName}</span></div>
-        <div class="form-group"><label>Acción *</label><input type="text" id="editActionTitle" value="${action.title || action.description || ''}" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;"></div>
-        <div class="form-row">
-            <div class="form-group"><label>Responsable</label>
-                <select id="editActionResponsible" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
-                    <option value="">Sin asignar</option>
-                    ${masterCollaborators.map(c => `<option value="${c}" ${action.responsible === c ? 'selected' : ''}>${c}</option>`).join('')}
-                </select>
-            </div>
-            <div class="form-group"><label>Fecha</label><input type="date" id="editActionDate" value="${action.date || ''}" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;"></div>
-        </div>
-        <div class="form-group"><label>Estado</label>
-            <select id="editActionStatus" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
-                <option value="inicio" ${action.status==='inicio'?'selected':''}>🔵 En Inicio</option>
-                <option value="mejora" ${action.status==='mejora'?'selected':''}>✅ Mejora</option>
-                <option value="nomejora" ${action.status==='nomejora'?'selected':''}>❌ Sin Mejora</option>
-            </select>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:24px;">
-            <button class="action-btn success" onclick="submitActionEdit('${action.id}')">💾 Guardar</button>
-            <button class="action-btn" style="background:var(--danger-color);" onclick="deleteActionItem('${action.id}')">🗑️ Eliminar</button>
-            <button class="action-btn" style="background:var(--text-secondary);" onclick="closeModalById('actionModal')">Cancelar</button>
-        </div>`;
-    document.getElementById('actionModal').classList.add('active');
+  const ind = [...OKRsBase,...KPIsBase,...indicators].find(i=>i.id===action.indicatorId);
+  const indName = ind ? ind.name : action.indicatorId;
+  const mc = document.getElementById('actionModalContent');
+  mc.innerHTML = `
+    <button class="modal-close" onclick="closeModal('actionModal')">×</button>
+    <div class="modal-title">Editar Acción</div>
+    <div class="modal-sub">${indName}</div>
+    <div class="form-group"><label class="form-label">Descripción *</label>
+      <textarea class="form-textarea" id="eaTitle">${action.title||action.description||''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Responsable</label>
+        <select class="form-select" id="eaResp">
+          <option value="">Sin asignar</option>
+          ${masterCollaborators.map(c=>`<option value="${c}" ${action.responsible===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Fecha</label>
+        <input class="form-input" type="date" id="eaDate" value="${action.date||''}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select class="form-select" id="eaStatus">
+        <option value="inicio" ${action.status==='inicio'?'selected':''}>🔵 En Inicio</option>
+        <option value="mejora" ${action.status==='mejora'?'selected':''}>✅ Mejora</option>
+        <option value="nomejora" ${action.status==='nomejora'?'selected':''}>❌ Sin Mejora</option>
+      </select>
+    </div>
+    <div class="form-footer">
+      <button class="btn btn-danger" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteActionDB('${action.id}');closeModal('actionModal');renderAll();}})()">🗑 Eliminar</button>
+      <button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="(async()=>{
+        const t=document.getElementById('eaTitle').value.trim();
+        if(!t){alert('La descripción no puede estar vacía');return;}
+        const ok=await updateActionDB('${action.id}',{title:t,responsible:document.getElementById('eaResp').value,date:document.getElementById('eaDate').value,status:document.getElementById('eaStatus').value});
+        if(ok){closeModal('actionModal');renderAll();}
+      })()">💾 Guardar</button>
+    </div>`;
+  openModal('actionModal');
 }
 
-async function submitActionEdit(actionId) {
-    const title = document.getElementById('editActionTitle').value.trim();
-    if (!title) { alert('La descripción no puede estar vacía'); return; }
-    const data = {
-        title,
-        responsible: document.getElementById('editActionResponsible').value,
-        date: document.getElementById('editActionDate').value,
-        status: document.getElementById('editActionStatus').value
-    };
-    const ok = await updateActionInDB(actionId, data);
-    if (ok) { closeModalById('actionModal'); renderAllSections(); }
+function openAssignModal(kpiId, kpiName, editIdx=null) {
+  document.getElementById('assignKpiId').value = kpiId;
+  document.getElementById('assignEditIdx').value = editIdx!==null ? editIdx : '';
+  document.getElementById('assignModalTitle').textContent = editIdx!==null ? 'Editar Meta' : `Asignar a: ${kpiName}`;
+  document.getElementById('assignSubmitBtn').textContent = editIdx!==null ? 'Actualizar' : 'Asignar';
+  const sel = document.getElementById('assignCollabSel');
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' + masterCollaborators.map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('assignForm').reset();
+  document.getElementById('assignKpiId').value = kpiId;
+  document.getElementById('assignEditIdx').value = editIdx!==null ? editIdx : '';
+  if(editIdx!==null) {
+    const a = kpiAssignments[kpiId][editIdx];
+    sel.value = a.name;
+    sel.disabled = true;
+    document.getElementById('assignTarget').value = a.target;
+    document.getElementById('assignCurrent').value = a.current||'';
+  } else {
+    sel.disabled = false;
+  }
+  openModal('assignModal');
 }
 
-async function deleteActionItem(actionId) {
-    if (confirm('¿Eliminar esta acción?')) {
-        const ok = await deleteActionFromDB(actionId);
-        if (ok) { closeModalById('actionModal'); renderAllSections(); }
+// ── Init ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async()=>{
+  await loadAll();
+  document.getElementById('loadingOverlay').style.display='none';
+
+  // Nav
+  document.querySelectorAll('.nav-link[data-section]').forEach(link=>{
+    link.addEventListener('click',e=>{
+      e.preventDefault();
+      const s = link.dataset.section;
+      document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+      document.getElementById(s).classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+      link.classList.add('active');
+      const titles={home:'Dashboard <span>General</span>',okrs:'Objetivos <span>y Resultados</span>',kpis:'Indicadores <span>Clave</span>',acciones:'Seguimiento <span>de Acciones</span>'};
+      document.getElementById('topbarTitle').innerHTML = titles[s]||s;
+    });
+  });
+
+  // Filters — home
+  document.querySelectorAll('[data-filter="area"]').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('[data-filter="area"]').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      filters.home.area = chip.dataset.value;
+      renderHome();
+    });
+  });
+  document.querySelectorAll('[data-filter="period"]').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('[data-filter="period"]').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      filters.home.period = chip.dataset.value;
+      renderHome();
+    });
+  });
+  // OKR filters
+  document.querySelectorAll('.okr-area-f').forEach(chip=>{
+    chip.addEventListener('click',()=>{ document.querySelectorAll('.okr-area-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.okrs.area=chip.dataset.value; renderOKRs(); });
+  });
+  document.querySelectorAll('.okr-period-f').forEach(chip=>{
+    chip.addEventListener('click',()=>{ document.querySelectorAll('.okr-period-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.okrs.period=chip.dataset.value; renderOKRs(); });
+  });
+  // KPI filters
+  document.querySelectorAll('.kpi-area-f').forEach(chip=>{
+    chip.addEventListener('click',()=>{ document.querySelectorAll('.kpi-area-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.kpis.area=chip.dataset.value; renderKPIs(); });
+  });
+  document.querySelectorAll('.kpi-period-f').forEach(chip=>{
+    chip.addEventListener('click',()=>{ document.querySelectorAll('.kpi-period-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.kpis.period=chip.dataset.value; renderKPIs(); });
+  });
+
+  // Type/period selectors in modal
+  document.querySelectorAll('.type-opt').forEach(o=>{
+    o.addEventListener('click',()=>{ document.querySelectorAll('.type-opt').forEach(x=>x.classList.remove('selected')); o.classList.add('selected'); document.getElementById('indicatorType').value=o.dataset.type; });
+  });
+  document.querySelectorAll('.period-opt').forEach(o=>{
+    o.addEventListener('click',()=>{ document.querySelectorAll('.period-opt').forEach(x=>x.classList.remove('selected')); o.classList.add('selected'); document.getElementById('indicatorPeriod').value=o.dataset.period; });
+  });
+
+  // Buttons
+  document.getElementById('addBtn').addEventListener('click',()=>openIndicatorModal());
+  document.getElementById('manageCollabsBtn').addEventListener('click',()=>{ renderCollabList(); openModal('collabModal'); });
+  document.getElementById('collabsNavBtn').addEventListener('click',e=>{ e.preventDefault(); renderCollabList(); openModal('collabModal'); });
+  document.getElementById('closeIndicatorModal').addEventListener('click',()=>closeModal('indicatorModal'));
+  document.getElementById('cancelIndBtn').addEventListener('click',()=>closeModal('indicatorModal'));
+  document.getElementById('deleteIndBtn').addEventListener('click',async()=>{
+    if(confirm('¿Eliminar este indicador?')){ const ok=await deleteIndicatorDB(editingId); if(ok){closeModal('indicatorModal');renderAll();} }
+  });
+
+  // Forms
+  document.getElementById('indicatorForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const type=document.getElementById('indicatorType').value;
+    const period=document.getElementById('indicatorPeriod').value;
+    if(!type||!period){alert('Selecciona tipo y periodicidad');return;}
+    const data={id:editingId||null,type,name:document.getElementById('indicatorName').value,area:document.getElementById('indicatorArea').value,target:parseFloat(document.getElementById('indicatorTarget').value),unit:document.getElementById('indicatorUnit').value,current:parseFloat(document.getElementById('indicatorCurrent').value)||0,period};
+    const ok=await saveIndicatorDB(data);
+    if(ok){closeModal('indicatorModal');renderAll();}
+  });
+
+  document.getElementById('actionForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const indId=document.getElementById('actionIndId').value;
+    const desc=document.getElementById('actionDesc').value.trim();
+    const date=document.getElementById('actionDate').value;
+    const status=document.getElementById('actionStatus').value;
+    const resp=document.getElementById('actionResp').value.trim();
+    if(!desc||!date||!status){alert('Completa todos los campos');return;}
+    const ok=await saveActionDB({indicatorId:indId,description:desc,date,status,responsible:resp||'No asignado'});
+    if(ok){closeModal('actionModal');renderAll();}
+  });
+
+  document.getElementById('collabForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const name=document.getElementById('newCollabName').value.trim();
+    if(!name) return;
+    if(masterCollaborators.includes(name)){alert('Ya existe');return;}
+    const ok=await saveCollabDB(name);
+    if(ok){document.getElementById('newCollabName').value='';renderCollabList();updateStats();}
+  });
+
+  document.getElementById('assignForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const kpiId=document.getElementById('assignKpiId').value;
+    const editIdx=document.getElementById('assignEditIdx').value;
+    const name=document.getElementById('assignCollabSel').value;
+    const target=parseFloat(document.getElementById('assignTarget').value);
+    const current=parseFloat(document.getElementById('assignCurrent').value)||0;
+    if(!name){alert('Selecciona un colaborador');return;}
+    if(editIdx!==''){
+      const a=kpiAssignments[kpiId][editIdx];
+      const ok=await updateAssignDB(a.id,{target,current});
+      if(ok){kpiAssignments[kpiId][editIdx]={...a,target,current};}
+    } else {
+      if((kpiAssignments[kpiId]||[]).some(a=>a.name===name)){alert('Ya está asignado');return;}
+      await saveAssignDB(kpiId,{name,target,current});
     }
-}
+    closeModal('assignModal');
+    renderAll();
+  });
 
-function closeModalById(id) { document.getElementById(id).classList.remove('active'); }
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('active'); });
+  });
+
+  renderAll();
+});
+
+function renderCollabList() {
+  const list = document.getElementById('collabListModal');
+  if(!masterCollaborators.length){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Sin colaboradores registrados</div>';return;}
+  list.innerHTML = masterCollaborators.map(name=>{
+    const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<div class="collab-list-item">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="collab-avatar">${initials}</div>
+        <span style="font-weight:600">${name}</span>
+      </div>
+      <button class="icon-btn del" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteCollabDB('${name}');renderCollabList();updateStats();renderAll();}})()">✕</button>
+    </div>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
