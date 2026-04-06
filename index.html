@@ -1293,9 +1293,17 @@ async function saveIndicatorDB(data) {
   if(editingId) {
     const isBase = [...OKRsBase,...KPIsBase].some(i=>i.id===editingId);
     if(isBase) {
+      // Actualizar en memoria
       const arr = data.type==='okr'?OKRsBase:KPIsBase;
       const idx = arr.findIndex(i=>i.id===editingId);
       if(idx!==-1) arr[idx]={...arr[idx],...data};
+      // Guardar en Supabase para que persista
+      const existing = await sb.from('kpi_indicators').select('id').eq('id', editingId).single();
+      if(existing.data) {
+        await sb.from('kpi_indicators').update({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).eq('id', editingId);
+      } else {
+        await sb.from('kpi_indicators').insert({id:editingId,type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period});
+      }
       return true;
     }
     const {error}=await sb.from('kpi_indicators').update({type:data.type,name:data.name,area:data.area,target:data.target,unit:data.unit,current:data.current,period:data.period}).eq('id',editingId);
