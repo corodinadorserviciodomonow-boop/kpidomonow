@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DomoNow — Intelligence Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
@@ -37,889 +36,200 @@
   --sidebar-w: 240px;
   --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(91,82,232,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;bottom:-150px;right:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,168,107,0.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:#1e1b4b;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.logo-mark{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--accent-glow);}
+.logo-text{font-family:'Instrument Serif',serif;font-size:20px;color:#fff;letter-spacing:-0.3px;}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;letter-spacing:1.5px;text-transform:uppercase;}
+.sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.nav-section-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:1.2px;text-transform:uppercase;padding:10px 8px 4px;}
+.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;cursor:pointer;transition:all var(--transition);border:1px solid transparent;text-decoration:none;position:relative;overflow:hidden;}
+.nav-link::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:var(--accent);border-radius:0 2px 2px 0;transform:scaleY(0);transition:transform var(--transition);}
+.nav-link:hover{background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.15);}
+.nav-link.active{background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.25);}
+.nav-link.active::before{transform:scaleY(1);}
+.nav-icon{font-size:16px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;}
+.nav-link.active .nav-badge{background:rgba(255,255,255,0.25);color:#fff;}
+.sidebar-user{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px;}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+.user-name{font-size:12px;font-weight:600;color:#fff;}
+.user-role{font-size:11px;color:rgba(255,255,255,0.4);}
+.user-status{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
 
-/* Ambient background orbs */
-body::before {
-  content: '';
-  position: fixed;
-  top: -200px; left: -200px;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(91,82,232,0.06) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -150px; right: -150px;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(0,168,107,0.04) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* MAIN */
+.main{margin-left:var(--sidebar-w);min-height:100vh;position:relative;z-index:1;}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(245,245,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.topbar-title{font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);letter-spacing:-0.3px;}
+.topbar-title span{color:var(--accent2);font-style:italic;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
 
-/* ── SIDEBAR ── */
-.sidebar {
-  position: fixed;
-  top: 0; left: 0;
-  width: var(--sidebar-w);
-  height: 100vh;
-  background: #1e1b4b;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  padding: 0;
-}
-.sidebar-logo {
-  padding: 24px 20px 20px;
-  border-bottom: 1px solid var(--border);
-}
-.logo-mark {
-  display: flex; align-items: center; gap: 10px;
-}
-.logo-icon {
-  width: 36px; height: 36px;
-  background: var(--accent);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-.logo-text {
-  font-family: 'Instrument Serif', serif;
-  font-size: 20px;
-  color: #fff;
-  letter-spacing: -0.3px;
-}
-.logo-sub {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  margin-top: 2px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all var(--transition);border:1px solid transparent;letter-spacing:0.2px;}
+.btn-ghost{background:var(--surface);color:var(--text2);border-color:var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 20px var(--accent-glow);}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 28px var(--accent-glow);}
+.btn-danger{background:var(--red-dim);color:var(--red);border-color:rgba(255,95,126,0.2);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.btn-success{background:var(--green-dim);color:var(--green);border-color:rgba(0,217,139,0.2);}
+.btn-success:hover{background:var(--green);color:#fff;}
 
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
-}
-.nav-section-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  padding: 10px 8px 4px;
-}
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  color: rgba(255,255,255,0.65);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition);
-  border: 1px solid transparent;
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-.nav-link::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0;
-  width: 3px; height: 100%;
-  background: var(--accent);
-  border-radius: 0 2px 2px 0;
-  transform: scaleY(0);
-  transition: transform var(--transition);
-}
-.nav-link:hover {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border-color: rgba(255,255,255,0.15);
-}
-.nav-link.active {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  border-color: rgba(255,255,255,0.25);
-}
-.nav-link.active::before { transform: scaleY(1); }
-.nav-icon { font-size: 16px; flex-shrink: 0; }
-.nav-badge {
-  margin-left: auto;
-  background: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.5);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 20px;
-  min-width: 20px;
-  text-align: center;
-}
-.nav-link.active .nav-badge {
-  background: rgba(255,255,255,0.25);
-  color: #fff;
-}
+.content{padding:28px;max-width:1400px;}
 
-.sidebar-user {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.user-avatar {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--purple));
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 12px;
-  color: #fff; flex-shrink: 0;
-}
-.user-name { font-size: 12px; font-weight: 600; color: #fff; }
-.user-role { font-size: 11px; color: rgba(255,255,255,0.4); }
-.user-status {
-  margin-left: auto;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
-}
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:all var(--transition);cursor:default;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-accent,var(--accent));opacity:0.7;}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.1);}
+.stat-icon{width:38px;height:38px;border-radius:10px;background:var(--card-bg,rgba(108,99,255,0.12));display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px;}
+.stat-value{font-family:'Instrument Serif',serif;font-size:32px;color:var(--text);line-height:1;margin-bottom:4px;}
+.stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;}
+.stat-delta{position:absolute;top:16px;right:16px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.delta-up{background:var(--green-dim);color:var(--green);}
+.delta-neutral{background:var(--amber-dim);color:var(--amber);}
 
-/* ── MAIN ── */
-.main {
-  margin-left: var(--sidebar-w);
-  min-height: 100vh;
-  position: relative;
-  z-index: 1;
-}
+/* FILTERS */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-right:4px;}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all var(--transition);}
+.chip:hover{border-color:var(--accent);color:var(--accent2);}
+.chip.active{background:rgba(108,99,255,0.15);border-color:rgba(108,99,255,0.4);color:var(--accent2);}
+.chip-divider{width:1px;height:20px;background:var(--border);margin:0 4px;}
 
-/* ── TOPBAR ── */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(245,245,248,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  height: 62px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.topbar-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 22px;
-  color: var(--text);
-  letter-spacing: -0.3px;
-}
-.topbar-title span { color: var(--accent2); font-style: italic; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:'Instrument Serif',serif;font-size:18px;color:var(--text);display:flex;align-items:center;gap:8px;}
+.section-count{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;}
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-  border: 1px solid transparent;
-  letter-spacing: 0.2px;
-}
-.btn-ghost {
-  background: var(--surface);
-  color: var(--text2);
-  border-color: var(--border2);
-}
-.btn-ghost:hover { background: var(--surface2); color: var(--text); }
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 20px var(--accent-glow);
-}
-.btn-primary:hover {
-  background: var(--accent2);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 28px var(--accent-glow);
-}
-.btn-danger { background: var(--red-dim); color: var(--red); border-color: rgba(255,95,126,0.2); }
-.btn-danger:hover { background: var(--red); color: #fff; }
-.btn-success { background: var(--green-dim); color: var(--green); border-color: rgba(0,217,139,0.2); }
-.btn-success:hover { background: var(--green); color: #fff; }
+/* INDICATOR CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-bottom:32px;}
+.ind-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all var(--transition);position:relative;}
+.ind-card:hover{border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.12);transform:translateY(-2px);}
+.ind-card-accent{height:3px;opacity:0.6;}
+.ind-card-body{padding:18px 20px;}
+.ind-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.ind-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;}
+.badge-okr{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(192,132,252,0.2);}
+.badge-kpi{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,139,0.2);}
+.badge-period{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(56,189,248,0.15);}
+.badge-area{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,181,71,0.15);}
+.ind-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;}
+.ind-meta{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;}
+.ind-progress-wrap{display:flex;align-items:center;gap:12px;margin:14px 0;}
+.ind-progress-bar-wrap{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.ind-progress-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(0.4,0,0.2,1);position:relative;width:0;}
+.ind-progress-fill::after{content:'';position:absolute;right:0;top:-2px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor;}
+.ind-progress-label{font-size:11px;font-weight:700;color:var(--text2);min-width:32px;text-align:right;}
+.ind-collabs{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-top:12px;}
+.ind-collabs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.ind-collabs-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;}
+.collab-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);transition:all var(--transition);}
+.collab-row:last-child{margin-bottom:0;}
+.collab-row:hover{border-color:var(--border2);}
+.collab-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.collab-info{flex:1;min-width:0;}
+.collab-name{font-size:12px;font-weight:600;color:var(--text);}
+.collab-val{font-size:11px;color:var(--text3);}
+.collab-mini-bar-wrap{width:60px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.collab-mini-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+.collab-actions{display:flex;gap:4px;}
+.icon-btn{width:26px;height:26px;border:none;background:transparent;color:var(--text3);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all var(--transition);}
+.icon-btn:hover{background:var(--surface2);color:var(--text);}
+.icon-btn.del:hover{color:var(--red);}
+.ind-actions-section{background:rgba(255,181,71,0.04);border:1px solid rgba(255,181,71,0.1);border-radius:var(--radius-sm);padding:12px;margin-top:10px;}
+.ind-actions-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ind-actions-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;display:flex;align-items:center;gap:6px;}
+.action-chip{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--surface);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);font-size:12px;transition:all var(--transition);}
+.action-chip:last-child{margin-bottom:0;}
+.action-chip:hover{border-color:var(--border2);}
+.action-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.action-dot.mejora{background:var(--green);box-shadow:0 0 6px var(--green);}
+.action-dot.inicio{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+.action-dot.nomejora{background:var(--red);box-shadow:0 0 6px var(--red);}
+.action-chip-info{flex:1;min-width:0;}
+.action-chip-title{color:var(--text);font-weight:500;line-height:1.3;}
+.action-chip-meta{color:var(--text3);font-size:11px;margin-top:2px;}
+.action-chip-edit{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 6px;border-radius:5px;transition:all var(--transition);}
+.action-chip-edit:hover{background:var(--surface2);color:var(--text);}
+.ind-card-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.card-action-btn{flex:1;padding:7px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all var(--transition);border:1px solid var(--border);background:var(--bg3);color:var(--text2);text-align:center;}
+.card-action-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+.card-action-btn.primary{background:rgba(108,99,255,0.1);color:var(--accent2);border-color:rgba(108,99,255,0.2);}
+.card-action-btn.primary:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-/* ── CONTENT ── */
-.content {
-  padding: 28px;
-  max-width: 1400px;
-}
+/* ACCIONES TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.table-head{display:grid;padding:12px 20px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;}
+.table-row{display:grid;padding:14px 20px;border-bottom:1px solid var(--border);align-items:center;transition:background var(--transition);font-size:13px;}
+.table-row:last-child{border-bottom:none;}
+.table-row:hover{background:var(--bg3);}
+.table-cols-actions{grid-template-columns:1.5fr 2.5fr 1fr 0.8fr 0.8fr 1fr;gap:12px;}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.status-mejora{background:var(--green-dim);color:var(--green);}
+.status-inicio{background:var(--blue-dim);color:var(--blue);}
+.status-nomejora{background:var(--red-dim);color:var(--red);}
 
-/* ── STAT CARDS ── */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
-}
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-  transition: all var(--transition);
-  cursor: default;
-}
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--card-accent, var(--accent));
-  opacity: 0.7;
-}
-.stat-card:hover {
-  border-color: var(--border2);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-}
-.stat-icon {
-  width: 38px; height: 38px;
-  border-radius: 10px;
-  background: var(--card-bg, rgba(108,99,255,0.12));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  margin-bottom: 14px;
-}
-.stat-value {
-  font-family: 'Instrument Serif', serif;
-  font-size: 32px;
-  color: var(--text);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.stat-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.stat-delta {
-  position: absolute;
-  top: 16px; right: 16px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
-}
-.delta-up { background: var(--green-dim); color: var(--green); }
-.delta-neutral { background: var(--amber-dim); color: var(--amber); }
+/* SECTION VISIBILITY */
+.section{display:none;}
+.section.active{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-/* ── FILTERS ── */
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-.filter-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-right: 4px;
-}
-.chip {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text2);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-.chip:hover { border-color: var(--accent); color: var(--accent2); }
-.chip.active {
-  background: rgba(108,99,255,0.15);
-  border-color: rgba(108,99,255,0.4);
-  color: var(--accent2);
-}
-.chip-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px 32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.5);animation:modalIn 0.25s cubic-bezier(0.4,0,0.2,1);position:relative;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(12px);}to{opacity:1;transform:none;}}
+.modal-close{position:absolute;top:20px;right:20px;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all var(--transition);}
+.modal-close:hover{background:var(--red-dim);color:var(--red);border-color:rgba(255,95,126,0.3);}
+.modal-title{font-family:'Instrument Serif',serif;font-size:20px;color:var(--text);margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:24px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:7px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:border var(--transition);outline:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-glow);}
+.form-select option{background:var(--bg2);}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.type-selector{display:flex;gap:10px;}
+.type-opt{flex:1;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:all var(--transition);}
+.type-opt:hover{border-color:var(--accent);color:var(--accent2);}
+.type-opt.selected{background:rgba(108,99,255,0.12);border-color:rgba(108,99,255,0.4);color:var(--accent2);}
+.period-selector{display:flex;gap:10px;}
+.period-opt{flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:all var(--transition);}
+.period-opt:hover{border-color:var(--green);color:var(--green);}
+.period-opt.selected{background:var(--green-dim);border-color:rgba(0,217,139,0.3);color:var(--green);}
+.collab-list-modal{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-top:12px;max-height:200px;overflow-y:auto;}
+.collab-list-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;transition:background var(--transition);}
+.collab-list-item:last-child{border-bottom:none;}
+.collab-list-item:hover{background:var(--surface);}
 
-/* ── SECTION HEADER ── */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.section-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 18px;
-  color: var(--text);
-  display: flex; align-items: center; gap: 8px;
-}
-.section-count {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text3);
-  background: var(--surface2);
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-/* ── INDICATOR CARDS ── */
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
-}
-.ind-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: all var(--transition);
-  position: relative;
-}
-.ind-card:hover {
-  border-color: var(--border2);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
-}
-.ind-card-accent {
-  height: 3px;
-  background: var(--card-color, var(--accent));
-  opacity: 0.6;
-}
-.ind-card-body { padding: 18px 20px; }
-.ind-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.ind-badges { display: flex; gap: 6px; flex-wrap: wrap; }
-.badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.badge-okr { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(192,132,252,0.2); }
-.badge-kpi { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,217,139,0.2); }
-.badge-period { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(56,189,248,0.15); }
-.badge-area { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,181,71,0.15); }
-
-.ind-pct-badge {
-  font-family: 'Instrument Serif', serif;
-  font-size: 22px;
-  color: var(--text);
-  line-height: 1;
-  flex-shrink: 0;
-}
-.ind-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.4;
-  margin-bottom: 4px;
-}
-.ind-meta {
-  font-size: 12px;
-  color: var(--text3);
-  display: flex; align-items: center; gap: 6px;
-}
-
-/* Progress arc (circular mini) */
-.ind-progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 14px 0;
-}
-.ind-progress-bar-wrap {
-  flex: 1;
-  height: 5px;
-  background: var(--bg3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.ind-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: var(--card-color, var(--accent));
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-}
-.ind-progress-fill::after {
-  content: '';
-  position: absolute;
-  right: 0; top: -2px;
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--card-color, var(--accent));
-  box-shadow: 0 0 8px var(--card-color, var(--accent));
-}
-.ind-progress-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text2);
-  min-width: 32px;
-  text-align: right;
-}
-
-/* Collabs inside card */
-.ind-collabs {
-  background: var(--bg3);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  margin-top: 12px;
-}
-.ind-collabs-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.ind-collabs-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-}
-.collab-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--surface);
-  border-radius: 8px;
-  margin-bottom: 6px;
-  border: 1px solid var(--border);
-  transition: all var(--transition);
-}
-.collab-row:last-child { margin-bottom: 0; }
-.collab-row:hover { border-color: var(--border2); }
-.collab-avatar {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--purple));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: #fff;
-  flex-shrink: 0;
-}
-.collab-info { flex: 1; min-width: 0; }
-.collab-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.collab-val { font-size: 11px; color: var(--text3); }
-.collab-pct {
-  font-size: 13px; font-weight: 700;
-  color: var(--card-color, var(--accent));
-}
-.collab-mini-bar-wrap {
-  width: 60px; height: 3px;
-  background: var(--bg3);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.collab-mini-fill {
-  height: 100%;
-  background: var(--card-color, var(--accent));
-  border-radius: 2px;
-  transition: width 0.8s ease;
-}
-.collab-actions { display: flex; gap: 4px; }
-.icon-btn {
-  width: 26px; height: 26px;
-  border: none;
-  background: transparent;
-  color: var(--text3);
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
-  transition: all var(--transition);
-}
-.icon-btn:hover { background: var(--surface2); color: var(--text); }
-.icon-btn.del:hover { color: var(--red); }
-
-/* Actions inside card */
-.ind-actions-section {
-  background: rgba(255,181,71,0.04);
-  border: 1px solid rgba(255,181,71,0.1);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  margin-top: 10px;
-}
-.ind-actions-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px;
-}
-.ind-actions-title {
-  font-size: 11px; font-weight: 700;
-  color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px;
-  display: flex; align-items: center; gap: 6px;
-}
-.action-chip {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--surface);
-  border-radius: 8px;
-  margin-bottom: 6px;
-  border: 1px solid var(--border);
-  font-size: 12px;
-  transition: all var(--transition);
-}
-.action-chip:last-child { margin-bottom: 0; }
-.action-chip:hover { border-color: var(--border2); }
-.action-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-.action-dot.mejora { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.action-dot.inicio { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
-.action-dot.nomejora { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.action-chip-info { flex: 1; min-width: 0; }
-.action-chip-title { color: var(--text); font-weight: 500; line-height: 1.3; }
-.action-chip-meta { color: var(--text3); font-size: 11px; margin-top: 2px; }
-.action-chip-edit {
-  background: none; border: none; cursor: pointer;
-  color: var(--text3); font-size: 12px; padding: 2px 6px;
-  border-radius: 5px; transition: all var(--transition);
-}
-.action-chip-edit:hover { background: var(--surface2); color: var(--text); }
-
-/* Card footer */
-.ind-card-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.card-action-btn {
-  flex: 1;
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-  border: 1px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  text-align: center;
-}
-.card-action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
-.card-action-btn.primary { background: rgba(108,99,255,0.1); color: var(--accent2); border-color: rgba(108,99,255,0.2); }
-.card-action-btn.primary:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* ── ACCIONES TABLE ── */
-.table-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.table-head {
-  display: grid;
-  padding: 12px 20px;
-  background: var(--bg3);
-  border-bottom: 1px solid var(--border);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.table-row {
-  display: grid;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  align-items: center;
-  transition: background var(--transition);
-  font-size: 13px;
-}
-.table-row:last-child { border-bottom: none; }
-.table-row:hover { background: var(--bg3); }
-.table-cols-actions { grid-template-columns: 1.5fr 2.5fr 1fr 0.8fr 0.8fr 1fr; gap: 12px; }
-.status-pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px; font-weight: 600;
-}
-.status-mejora { background: var(--green-dim); color: var(--green); }
-.status-inicio { background: var(--blue-dim); color: var(--blue); }
-.status-nomejora { background: var(--red-dim); color: var(--red); }
-
-/* ── SECTION VISIBILITY ── */
-.section { display: none; }
-.section.active { display: block; animation: fadeUp 0.3s ease; }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ── MODAL ── */
-.modal-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.modal-overlay.active { display: flex; }
-.modal {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 28px 32px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-  animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1);
-  position: relative;
-}
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to { opacity: 1; transform: none; }
-}
-.modal-close {
-  position: absolute; top: 20px; right: 20px;
-  width: 30px; height: 30px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text2);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  transition: all var(--transition);
-}
-.modal-close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(255,95,126,0.3); }
-.modal-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 20px;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
-
-/* Form */
-.form-group { margin-bottom: 18px; }
-.form-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  margin-bottom: 7px;
-}
-.form-input, .form-select, .form-textarea {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  transition: border var(--transition);
-  outline: none;
-}
-.form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--accent);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.form-select option { background: var(--bg2); }
-.form-textarea { resize: vertical; min-height: 80px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-footer {
-  display: flex; gap: 10px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-/* Type selector */
-.type-selector { display: flex; gap: 10px; margin-bottom: 0; }
-.type-opt {
-  flex: 1; padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg3);
-  color: var(--text2);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px; font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-.type-opt:hover { border-color: var(--accent); color: var(--accent2); }
-.type-opt.selected {
-  background: rgba(108,99,255,0.12);
-  border-color: rgba(108,99,255,0.4);
-  color: var(--accent2);
-  box-shadow: inset 0 0 0 1px rgba(108,99,255,0.2);
-}
-.period-selector { display: flex; gap: 10px; }
-.period-opt {
-  flex: 1; padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg3);
-  color: var(--text2);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px; font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-.period-opt:hover { border-color: var(--green); color: var(--green); }
-.period-opt.selected {
-  background: var(--green-dim);
-  border-color: rgba(0,217,139,0.3);
-  color: var(--green);
-}
-
-/* Collab list */
-.collab-list-modal {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-top: 12px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-.collab-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  transition: background var(--transition);
-}
-.collab-list-item:last-child { border-bottom: none; }
-.collab-list-item:hover { background: var(--surface); }
-
-/* Loading */
-.loading-overlay {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 16px;
-}
-.loading-logo {
-  font-family: 'Instrument Serif', serif;
-  font-size: 32px;
-  color: var(--text);
-}
-.loading-logo span { color: var(--accent); font-style: italic; }
-.loader {
-  width: 36px; height: 36px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 12px; color: var(--text3); letter-spacing: 0.5px; }
-
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text3);
-}
-.empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
-.empty-state-text { font-size: 14px; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-/* Tooltip */
-[data-tooltip] { position: relative; }
-[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface2);
-  color: var(--text);
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  border: 1px solid var(--border2);
-  z-index: 100;
-  pointer-events: none;
-}
-
-@media (max-width: 900px) {
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .cards-grid { grid-template-columns: 1fr; }
-  .form-row { grid-template-columns: 1fr; }
-  .table-cols-actions { grid-template-columns: 1fr 2fr 1fr 1fr; }
-}
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading-logo{font-family:'Instrument Serif',serif;font-size:32px;color:var(--text);}
+.loading-logo span{color:var(--accent);font-style:italic;}
+.loader{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:12px;color:var(--text3);letter-spacing:0.5px;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+.empty-state-icon{font-size:40px;margin-bottom:12px;opacity:0.4;}
+.empty-state-text{font-size:14px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+[data-tooltip]{position:relative;}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);font-size:11px;padding:4px 10px;border-radius:6px;white-space:nowrap;border:1px solid var(--border2);z-index:100;pointer-events:none;}
+@media(max-width:900px){.stats-row{grid-template-columns:1fr 1fr;}.cards-grid{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.table-cols-actions{grid-template-columns:1fr 2fr 1fr 1fr;}}
 </style>
 </head>
 <body>
@@ -927,7 +237,7 @@ body::after {
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-logo">Domo<span>Now</span></div>
   <div class="loader"></div>
-  <div class="loading-text">Conectando con Supabase...</div>
+  <div class="loading-text" id="loadingText">Conectando con Supabase...</div>
 </div>
 
 <aside class="sidebar">
@@ -942,33 +252,16 @@ body::after {
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Vistas</div>
-    <a href="#" class="nav-link active" data-section="home">
-      <span class="nav-icon">🏠</span> Dashboard
-      <span class="nav-badge" id="badge-home">—</span>
-    </a>
-    <a href="#" class="nav-link" data-section="okrs">
-      <span class="nav-icon">🎯</span> OKRs
-      <span class="nav-badge" id="badge-okrs">—</span>
-    </a>
-    <a href="#" class="nav-link" data-section="kpis">
-      <span class="nav-icon">📈</span> KPIs
-      <span class="nav-badge" id="badge-kpis">—</span>
-    </a>
-    <a href="#" class="nav-link" data-section="acciones">
-      <span class="nav-icon">⚡</span> Acciones
-      <span class="nav-badge" id="badge-acciones">—</span>
-    </a>
+    <a href="#" class="nav-link active" data-section="home"><span class="nav-icon">🏠</span> Dashboard<span class="nav-badge" id="badge-home">—</span></a>
+    <a href="#" class="nav-link" data-section="okrs"><span class="nav-icon">🎯</span> OKRs<span class="nav-badge" id="badge-okrs">—</span></a>
+    <a href="#" class="nav-link" data-section="kpis"><span class="nav-icon">📈</span> KPIs<span class="nav-badge" id="badge-kpis">—</span></a>
+    <a href="#" class="nav-link" data-section="acciones"><span class="nav-icon">⚡</span> Acciones<span class="nav-badge" id="badge-acciones">—</span></a>
     <div class="nav-section-label" style="margin-top:8px;">Equipo</div>
-    <a href="#" class="nav-link" id="collabsNavBtn">
-      <span class="nav-icon">👥</span> Colaboradores
-    </a>
+    <a href="#" class="nav-link" id="collabsNavBtn"><span class="nav-icon">👥</span> Colaboradores</a>
   </nav>
   <div class="sidebar-user">
     <div class="user-avatar">MC</div>
-    <div>
-      <div class="user-name">Marco Carrasquilla</div>
-      <div class="user-role">CEO</div>
-    </div>
+    <div><div class="user-name">Marco Carrasquilla</div><div class="user-role">CEO</div></div>
     <div class="user-status" data-tooltip="En línea"></div>
   </div>
 </aside>
@@ -981,12 +274,11 @@ body::after {
       <button class="btn btn-primary" id="addBtn">＋ Nuevo Indicador</button>
     </div>
   </div>
-
   <div class="content">
 
     <!-- HOME -->
     <section id="home" class="section active">
-      <div class="stats-row" id="statsRow">
+      <div class="stats-row">
         <div class="stat-card" style="--card-accent:var(--purple);--card-bg:var(--purple-dim)">
           <div class="stat-icon">🎯</div>
           <div class="stat-value" id="statOkrs">—</div>
@@ -1012,7 +304,6 @@ body::after {
           <div class="stat-delta delta-up">Equipo</div>
         </div>
       </div>
-
       <div class="filter-bar">
         <span class="filter-label">Área</span>
         <div class="chip active" data-filter="area" data-value="all">Todas</div>
@@ -1116,6 +407,7 @@ body::after {
             <option value="">— Seleccionar —</option>
             <option>% (Porcentaje)</option><option>Días</option><option>Cantidad</option>
             <option>Horas</option><option>/10 (Puntuación)</option><option>USD</option>
+            <option>PH</option><option>socios</option><option>propiedades</option>
           </select>
         </div>
         <div class="form-group">
@@ -1135,7 +427,7 @@ body::after {
       <div class="form-footer">
         <button type="button" class="btn btn-danger" id="deleteIndBtn" style="display:none;margin-right:auto">🗑 Eliminar</button>
         <button type="button" class="btn btn-ghost" id="cancelIndBtn">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary" id="saveIndBtn">Guardar</button>
       </div>
     </form>
   </div>
@@ -1170,7 +462,9 @@ body::after {
       </div>
       <div class="form-group">
         <label class="form-label">Responsable</label>
-        <input class="form-input" type="text" id="actionResp" placeholder="Nombre del responsable">
+        <select class="form-select" id="actionResp">
+          <option value="">Sin asignar</option>
+        </select>
       </div>
       <div class="form-footer">
         <button type="button" class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
@@ -1205,7 +499,7 @@ body::after {
     <div class="modal-sub">Meta individual para este KPI</div>
     <form id="assignForm">
       <input type="hidden" id="assignKpiId">
-      <input type="hidden" id="assignEditIdx">
+      <input type="hidden" id="assignRecordId">
       <div class="form-group">
         <label class="form-label">Colaborador *</label>
         <select class="form-select" id="assignCollabSel" required><option value="">— Seleccionar —</option></select>
@@ -1229,77 +523,190 @@ body::after {
 </div>
 
 <script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
 const SB_URL = 'https://shxtjywgecluhppkypit.supabase.co';
 const SB_KEY = 'sb_publishable_BpasnmRGD1Z5Kqps8o60Zw_k4iZS_ZW';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// State
-let indicators = [], actions = [], masterCollaborators = [], kpiAssignments = {};
+// ── STATE (ALL data comes from Supabase) ──────────────────────────────────────
+let allIndicators = [];  // single source of truth — replaces OKRsBase + KPIsBase
+let actions = [];
+let masterCollaborators = [];
+let kpiAssignments = {};
 let editingId = null;
-let filters = { home: { area:'all', period:'all' }, okrs: { area:'all', period:'all' }, kpis: { area:'all', period:'all' } };
+let filters = { home:{area:'all',period:'all'}, okrs:{area:'all',period:'all'}, kpis:{area:'all',period:'all'} };
 
 const AREA_COLORS = { fabrica:'var(--blue)', marketing:'var(--purple)', comercial:'var(--amber)', servicio:'var(--green)' };
 const AREA_LABELS = { fabrica:'🏭 Fábrica', marketing:'📱 Marketing', comercial:'💼 Comercial', servicio:'🔧 Servicio' };
 
-const OKRsBase = [
-  { id:'okr-1',  name:'10 PH en vivo con 80% de módulos',       area:'fabrica',   period:'mensual',   target:10,     unit:'PH',           current:7,      type:'okr' },
-  { id:'okr-2',  name:'60% infraestructura TI sistematizada',    area:'fabrica',   period:'mensual',   target:60,     unit:'%',            current:60,     type:'okr' },
-  { id:'okr-3',  name:'60% pruebas QA automatizadas',            area:'fabrica',   period:'semanal',   target:60,     unit:'%',            current:48,     type:'okr' },
-  { id:'okr-4',  name:'80% satisfacción software',               area:'fabrica',   period:'mensual',   target:80,     unit:'%',            current:0,      type:'okr' },
-  { id:'okr-5',  name:'Equipo capacitado al 90%',                area:'marketing', period:'mensual',   target:90,     unit:'%',            current:90,     type:'okr' },
-  { id:'okr-6',  name:'80% material comercial optimizado',       area:'marketing', period:'mensual',   target:80,     unit:'%',            current:72,     type:'okr' },
-  { id:'okr-7',  name:'Plan de mercadeo diseñado al 90%',        area:'marketing', period:'quincenal', target:90,     unit:'%',            current:85,     type:'okr' },
-  { id:'okr-8',  name:'Equipo Ventas certificado al 90%',        area:'comercial', period:'mensual',   target:90,     unit:'%',            current:85,     type:'okr' },
-  { id:'okr-9',  name:'10 socios de negocio reclutados',         area:'comercial', period:'mensual',   target:10,     unit:'socios',       current:10,     type:'okr' },
-  { id:'okr-10', name:'80% socios capacitados',                  area:'comercial', period:'semanal',   target:80,     unit:'%',            current:64,     type:'okr' },
-  { id:'okr-11', name:'20 propiedades cerradas',                 area:'comercial', period:'mensual',   target:20,     unit:'propiedades',  current:16,     type:'okr' },
-  { id:'okr-12', name:'Equipo Servicio certificado al 90%',      area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:88,     type:'okr' },
-  { id:'okr-13', name:'80% PH implementadas con adopción',       area:'servicio',  period:'semanal',   target:80,     unit:'%',            current:72,     type:'okr' },
-  { id:'okr-14', name:'BPO definido y negociado al 90%',         area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:85,     type:'okr' }
-];
-const KPIsBase = [
-  { id:'kpi-1', name:'Cobertura de módulos funcionales', area:'fabrica',   period:'semanal',   target:95,     unit:'%',         current:92,    type:'kpi' },
-  { id:'kpi-2', name:'Defectos encontrados en QA',       area:'fabrica',   period:'semanal',   target:5,      unit:'Cantidad',  current:3,     type:'kpi' },
-  { id:'kpi-3', name:'Ciclo de desarrollo',              area:'fabrica',   period:'semanal',   target:14,     unit:'Días',      current:12,    type:'kpi' },
-  { id:'kpi-4', name:'Leads generados',                  area:'marketing', period:'quincenal', target:50,     unit:'Cantidad',  current:45,    type:'kpi' },
-  { id:'kpi-5', name:'Tasa de apertura',                 area:'marketing', period:'semanal',   target:35,     unit:'%',         current:32,    type:'kpi' },
-  { id:'kpi-6', name:'Pipeline de oportunidades',        area:'comercial', period:'mensual',   target:500000, unit:'USD',       current:450000,type:'kpi' },
-  { id:'kpi-7', name:'Tasa de cierre',                   area:'comercial', period:'mensual',   target:35,     unit:'%',         current:32,    type:'kpi' },
-  { id:'kpi-8', name:'Ciclo de implementación',          area:'servicio',  period:'semanal',   target:45,     unit:'Días',      current:42,    type:'kpi' },
-  { id:'kpi-9', name:'Tasa entregas puntual',            area:'servicio',  period:'semanal',   target:90,     unit:'%',         current:88,    type:'kpi' }
+// Seed data — only inserted once if table is empty
+const SEED_INDICATORS = [
+  { id:'okr-1',  type:'okr', name:'10 PH en vivo con 80% de módulos',       area:'fabrica',   period:'mensual',   target:10,     unit:'PH',           current:7   },
+  { id:'okr-2',  type:'okr', name:'60% infraestructura TI sistematizada',    area:'fabrica',   period:'mensual',   target:60,     unit:'%',            current:60  },
+  { id:'okr-3',  type:'okr', name:'60% pruebas QA automatizadas',            area:'fabrica',   period:'semanal',   target:60,     unit:'%',            current:48  },
+  { id:'okr-4',  type:'okr', name:'80% satisfacción software',               area:'fabrica',   period:'mensual',   target:80,     unit:'%',            current:0   },
+  { id:'okr-5',  type:'okr', name:'Equipo capacitado al 90%',                area:'marketing', period:'mensual',   target:90,     unit:'%',            current:90  },
+  { id:'okr-6',  type:'okr', name:'80% material comercial optimizado',       area:'marketing', period:'mensual',   target:80,     unit:'%',            current:72  },
+  { id:'okr-7',  type:'okr', name:'Plan de mercadeo diseñado al 90%',        area:'marketing', period:'quincenal', target:90,     unit:'%',            current:85  },
+  { id:'okr-8',  type:'okr', name:'Equipo Ventas certificado al 90%',        area:'comercial', period:'mensual',   target:90,     unit:'%',            current:85  },
+  { id:'okr-9',  type:'okr', name:'10 socios de negocio reclutados',         area:'comercial', period:'mensual',   target:10,     unit:'socios',       current:10  },
+  { id:'okr-10', type:'okr', name:'80% socios capacitados',                  area:'comercial', period:'semanal',   target:80,     unit:'%',            current:64  },
+  { id:'okr-11', type:'okr', name:'20 propiedades cerradas',                 area:'comercial', period:'mensual',   target:20,     unit:'propiedades',  current:16  },
+  { id:'okr-12', type:'okr', name:'Equipo Servicio certificado al 90%',      area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:88  },
+  { id:'okr-13', type:'okr', name:'80% PH implementadas con adopción',       area:'servicio',  period:'semanal',   target:80,     unit:'%',            current:72  },
+  { id:'okr-14', type:'okr', name:'BPO definido y negociado al 90%',         area:'servicio',  period:'mensual',   target:90,     unit:'%',            current:85  },
+  { id:'kpi-1',  type:'kpi', name:'Cobertura de módulos funcionales',        area:'fabrica',   period:'semanal',   target:95,     unit:'%',            current:92  },
+  { id:'kpi-2',  type:'kpi', name:'Defectos encontrados en QA',              area:'fabrica',   period:'semanal',   target:5,      unit:'Cantidad',     current:3   },
+  { id:'kpi-3',  type:'kpi', name:'Ciclo de desarrollo',                     area:'fabrica',   period:'semanal',   target:14,     unit:'Días',         current:12  },
+  { id:'kpi-4',  type:'kpi', name:'Leads generados',                         area:'marketing', period:'quincenal', target:50,     unit:'Cantidad',     current:45  },
+  { id:'kpi-5',  type:'kpi', name:'Tasa de apertura',                        area:'marketing', period:'semanal',   target:35,     unit:'%',            current:32  },
+  { id:'kpi-6',  type:'kpi', name:'Pipeline de oportunidades',               area:'comercial', period:'mensual',   target:500000, unit:'USD',          current:450000 },
+  { id:'kpi-7',  type:'kpi', name:'Tasa de cierre',                          area:'comercial', period:'mensual',   target:35,     unit:'%',            current:32  },
+  { id:'kpi-8',  type:'kpi', name:'Ciclo de implementación',                 area:'servicio',  period:'semanal',   target:45,     unit:'Días',         current:42  },
+  { id:'kpi-9',  type:'kpi', name:'Tasa entregas puntual',                   area:'servicio',  period:'semanal',   target:90,     unit:'%',            current:88  }
 ];
 
-// ── Modal helpers ─────────────────────────────
-function openModal(id){ document.getElementById(id).classList.add('active'); }
-function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+// ── SUPABASE HELPERS ──────────────────────────────────────────────────────────
 
-// ── Render ────────────────────────────────────
-function getAll(type,area,period) {
-  return [...OKRsBase,...KPIsBase,...indicators].filter(i=>{
-    if(type && i.type!==type) return false;
-    if(area!=='all' && i.area!==area) return false;
-    if(period!=='all' && i.period!==period) return false;
+async function seedIfEmpty() {
+  const { data, error } = await sb.from('kpi_indicators').select('id').limit(1);
+  if (error) { console.error('seed check error', error); return; }
+  if (data && data.length > 0) return; // already seeded
+  document.getElementById('loadingText').textContent = 'Inicializando datos base...';
+  const { error: e2 } = await sb.from('kpi_indicators').insert(SEED_INDICATORS);
+  if (e2) console.error('seed error', e2);
+}
+
+async function loadAll() {
+  const [ri, ra, rc, ras] = await Promise.all([
+    sb.from('kpi_indicators').select('*').order('id'),
+    sb.from('kpi_actions').select('*').order('date', { ascending: false }),
+    sb.from('kpi_collaborators').select('*').order('name'),
+    sb.from('kpi_assignments').select('*')
+  ]);
+
+  allIndicators = (ri.data || []).map(r => ({
+    id: r.id, type: r.type, name: r.name, area: r.area,
+    target: Number(r.target), unit: r.unit,
+    current: Number(r.current), period: r.period
+  }));
+
+  actions = (ra.data || []).map(r => ({
+    id: r.id, indicatorId: r.indicator_id, title: r.title,
+    description: r.title, date: r.date, status: r.status, responsible: r.responsible
+  }));
+
+  masterCollaborators = (rc.data || []).map(r => r.name);
+
+  kpiAssignments = {};
+  (ras.data || []).forEach(r => {
+    if (!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id] = [];
+    kpiAssignments[r.kpi_id].push({ id: r.id, name: r.collab_name, target: Number(r.target), current: Number(r.current) });
+  });
+}
+
+async function saveIndicatorDB(data) {
+  const payload = {
+    id: data.id, type: data.type, name: data.name, area: data.area,
+    target: data.target, unit: data.unit, current: data.current, period: data.period
+  };
+  const { error } = await sb.from('kpi_indicators').upsert(payload, { onConflict: 'id' });
+  if (error) { alert('Error guardando: ' + error.message); return false; }
+  return true;
+}
+
+async function deleteIndicatorDB(id) {
+  // delete cascading data first
+  await sb.from('kpi_assignments').delete().eq('kpi_id', id);
+  await sb.from('kpi_actions').delete().eq('indicator_id', id);
+  const { error } = await sb.from('kpi_indicators').delete().eq('id', id);
+  if (error) { alert('Error eliminando: ' + error.message); return false; }
+  return true;
+}
+
+async function saveActionDB({ indicatorId, description, date, status, responsible }) {
+  const { error } = await sb.from('kpi_actions').insert({
+    indicator_id: indicatorId, title: description,
+    date, status, responsible
+  });
+  if (error) { alert('Error guardando acción: ' + error.message); return false; }
+  return true;
+}
+
+async function updateActionDB(id, { title, responsible, date, status }) {
+  const { error } = await sb.from('kpi_actions').update({ title, responsible, date, status }).eq('id', id);
+  if (error) { alert('Error actualizando acción: ' + error.message); return false; }
+  return true;
+}
+
+async function deleteActionDB(id) {
+  const { error } = await sb.from('kpi_actions').delete().eq('id', id);
+  if (error) { alert('Error eliminando acción: ' + error.message); return false; }
+  return true;
+}
+
+async function saveCollabDB(name) {
+  const { error } = await sb.from('kpi_collaborators').insert({ name });
+  if (error) { alert('Error guardando colaborador: ' + error.message); return false; }
+  masterCollaborators.push(name);
+  return true;
+}
+
+async function deleteCollabDB(name) {
+  const { error } = await sb.from('kpi_collaborators').delete().eq('name', name);
+  if (error) { alert('Error eliminando colaborador: ' + error.message); return false; }
+  masterCollaborators = masterCollaborators.filter(n => n !== name);
+  return true;
+}
+
+async function saveAssignDB(kpiId, { name, target, current }) {
+  const { error } = await sb.from('kpi_assignments').insert({ kpi_id: kpiId, collab_name: name, target, current });
+  if (error) { alert('Error asignando: ' + error.message); return false; }
+  return true;
+}
+
+async function updateAssignDB(id, { target, current }) {
+  const { error } = await sb.from('kpi_assignments').update({ target, current }).eq('id', id);
+  if (error) { alert('Error actualizando asignación: ' + error.message); return false; }
+  return true;
+}
+
+async function deleteAssignDB(kpiId, idx) {
+  const a = kpiAssignments[kpiId]?.[idx];
+  if (!a) return false;
+  const { error } = await sb.from('kpi_assignments').delete().eq('id', a.id);
+  if (error) { alert('Error eliminando asignación: ' + error.message); return false; }
+  return true;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+function getFiltered(type, area, period) {
+  return allIndicators.filter(i => {
+    if (type && i.type !== type) return false;
+    if (area !== 'all' && i.area !== area) return false;
+    if (period !== 'all' && i.period !== period) return false;
     return true;
   });
 }
 
 function cardColor(ind) {
-  if(ind.type==='okr') return 'var(--purple)';
+  if (ind.type === 'okr') return 'var(--purple)';
   return AREA_COLORS[ind.area] || 'var(--accent)';
 }
 
 function renderCard(ind) {
-  const pct = Math.min(Math.round((ind.current/ind.target)*100), 100);
+  const pct = ind.target > 0 ? Math.min(Math.round((ind.current / ind.target) * 100), 100) : 0;
   const color = cardColor(ind);
   const assigns = kpiAssignments[ind.id] || [];
-  const relActions = actions.filter(a=>a.indicatorId===ind.id);
-  const pctColor = pct>=80 ? 'var(--green)' : pct>=50 ? 'var(--amber)' : 'var(--red)';
+  const relActions = actions.filter(a => a.indicatorId === ind.id);
+  const pctColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
 
   let collabsHtml = '';
-  if(ind.type==='kpi') {
-    const rows = assigns.map((a,i)=>{
-      const ap = a.target>0 ? Math.min(Math.round((a.current/a.target)*100),100) : 0;
-      const initials = a.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  if (ind.type === 'kpi') {
+    const rows = assigns.map((a, i) => {
+      const ap = a.target > 0 ? Math.min(Math.round((a.current / a.target) * 100), 100) : 0;
+      const initials = a.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
       return `<div class="collab-row">
         <div class="collab-avatar">${initials}</div>
         <div class="collab-info">
@@ -1307,9 +714,9 @@ function renderCard(ind) {
           <div class="collab-val">${a.current} / ${a.target} ${ind.unit}</div>
         </div>
         <div class="collab-mini-bar-wrap"><div class="collab-mini-fill" style="width:${ap}%;background:${color}"></div></div>
-        <span class="collab-pct" style="color:${color}">${ap}%</span>
+        <span style="font-size:13px;font-weight:700;color:${color}">${ap}%</span>
         <div class="collab-actions">
-          <button class="icon-btn edit-indiv-btn" data-kpiid="${ind.id}" data-kpiname="${ind.name}" data-idx="${i}" title="Editar">✏️</button>
+          <button class="icon-btn edit-indiv-btn" data-kpiid="${ind.id}" data-kpiname="${escHtml(ind.name)}" data-idx="${i}" title="Editar">✏️</button>
           <button class="icon-btn del delete-indiv-btn" data-kpiid="${ind.id}" data-idx="${i}" title="Eliminar">✕</button>
         </div>
       </div>`;
@@ -1317,32 +724,31 @@ function renderCard(ind) {
     collabsHtml = `<div class="ind-collabs">
       <div class="ind-collabs-header">
         <span class="ind-collabs-title">👤 Desempeño Individual</span>
-        <button class="btn btn-ghost assign-collab-btn" style="padding:4px 10px;font-size:11px" data-id="${ind.id}" data-name="${ind.name}">＋ Asignar</button>
+        <button class="btn btn-ghost assign-collab-btn" style="padding:4px 10px;font-size:11px" data-id="${ind.id}" data-name="${escHtml(ind.name)}">＋ Asignar</button>
       </div>
       ${assigns.length ? rows : '<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px">Sin asignaciones — haz clic en Asignar</div>'}
     </div>`;
   }
 
   let actionsHtml = '';
-  if(relActions.length) {
-    const chips = relActions.map(a=>`
+  if (relActions.length) {
+    const chips = relActions.map(a => `
       <div class="action-chip">
-        <div class="action-dot ${a.status||'inicio'}"></div>
+        <div class="action-dot ${a.status || 'inicio'}"></div>
         <div class="action-chip-info">
-          <div class="action-chip-title">${a.title||a.description}</div>
-          <div class="action-chip-meta">📅 ${a.date||'Sin fecha'} · 👤 ${a.responsible||'Sin asignar'}</div>
+          <div class="action-chip-title">${escHtml(a.title || a.description || '')}</div>
+          <div class="action-chip-meta">📅 ${a.date || 'Sin fecha'} · 👤 ${escHtml(a.responsible || 'Sin asignar')}</div>
         </div>
         <button class="action-chip-edit edit-action-btn" data-id="${a.id}">✏️</button>
       </div>`).join('');
     actionsHtml = `<div class="ind-actions-section">
       <div class="ind-actions-header">
         <span class="ind-actions-title">⚡ Acciones <span style="background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-size:10px">${relActions.length}</span></span>
-      </div>
-      ${chips}
+      </div>${chips}
     </div>`;
   }
 
-  return `<div class="ind-card" style="--card-color:${color}" data-id="${ind.id}">
+  return `<div class="ind-card" data-id="${ind.id}">
     <div class="ind-card-accent" style="background:${color}"></div>
     <div class="ind-card-body">
       <div class="ind-card-top">
@@ -1350,9 +756,9 @@ function renderCard(ind) {
           <div class="ind-badges">
             <span class="badge badge-${ind.type}">${ind.type.toUpperCase()}</span>
             <span class="badge badge-period">${ind.period}</span>
-            <span class="badge badge-area">${AREA_LABELS[ind.area]||ind.area}</span>
+            <span class="badge badge-area">${AREA_LABELS[ind.area] || ind.area}</span>
           </div>
-          <div class="ind-title" style="margin-top:10px">${ind.name}</div>
+          <div class="ind-title" style="margin-top:10px">${escHtml(ind.name)}</div>
           <div class="ind-meta">
             <span style="font-family:'Instrument Serif',serif;font-size:14px;color:var(--text)">${ind.current.toLocaleString()}</span>
             <span style="color:var(--border2)">/</span>
@@ -1366,7 +772,7 @@ function renderCard(ind) {
       </div>
       <div class="ind-progress-wrap">
         <div class="ind-progress-bar-wrap">
-          <div class="ind-progress-fill" style="width:${pct}%;background:${color}" data-pct="${pct}"></div>
+          <div class="ind-progress-fill" style="background:${color}" data-pct="${pct}"></div>
         </div>
         <span class="ind-progress-label" style="color:${pctColor}">${pct}%</span>
       </div>
@@ -1380,55 +786,97 @@ function renderCard(ind) {
   </div>`;
 }
 
-function renderGroup(title, items, containerId) {
-  if(!items.length) {
-    document.getElementById(containerId).innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No hay indicadores para esta vista</div></div>`;
-    return;
-  }
-  const okrs = items.filter(i=>i.type==='okr');
-  const kpis = items.filter(i=>i.type==='kpi');
-  let html = '';
-  if(okrs.length) {
-    html += `<div class="section-header"><div class="section-title">🎯 Objetivos <span class="section-count">${okrs.length}</span></div></div>`;
-    html += `<div class="cards-grid">${okrs.map(renderCard).join('')}</div>`;
-  }
-  if(kpis.length) {
-    html += `<div class="section-header" style="margin-top:${okrs.length?'8px':'0'}"><div class="section-title">📈 KPIs <span class="section-count">${kpis.length}</span></div></div>`;
-    html += `<div class="cards-grid">${kpis.map(renderCard).join('')}</div>`;
-  }
-  document.getElementById(containerId).innerHTML = html;
-  attachCardEvents(containerId);
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function attachCardEvents(containerId) {
+  const el = document.getElementById(containerId);
+  el.querySelectorAll('.btn-edit-ind').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ind = allIndicators.find(i => i.id == btn.dataset.id);
+      if (ind) openIndicatorModal(ind);
+    });
+  });
+  el.querySelectorAll('.btn-add-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ind = allIndicators.find(i => i.id == btn.dataset.id);
+      if (ind) openActionModal(ind.id, ind.name);
+    });
+  });
+  el.querySelectorAll('.assign-collab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!masterCollaborators.length) { alert('Primero agrega colaboradores en 👥 Equipo'); return; }
+      openAssignModal(btn.dataset.id, btn.dataset.name);
+    });
+  });
+  el.querySelectorAll('.edit-indiv-btn').forEach(btn => {
+    btn.addEventListener('click', () => openAssignModal(btn.dataset.kpiid, btn.dataset.kpiname, Number(btn.dataset.idx)));
+  });
+  el.querySelectorAll('.delete-indiv-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('¿Eliminar esta asignación?')) {
+        await deleteAssignDB(btn.dataset.kpiid, Number(btn.dataset.idx));
+        await loadAll(); renderAll();
+      }
+    });
+  });
+  el.querySelectorAll('.edit-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = actions.find(x => x.id == btn.dataset.id);
+      if (a) openActionEditModal(a);
+    });
+  });
+  // Animate bars
+  requestAnimationFrame(() => {
+    el.querySelectorAll('.ind-progress-fill').forEach(bar => {
+      bar.style.width = '0';
+      setTimeout(() => { bar.style.width = bar.dataset.pct + '%'; }, 80);
+    });
+  });
 }
 
 function renderHome() {
-  renderGroup('Dashboard', getAll(null, filters.home.area, filters.home.period), 'homeContent');
+  const items = getFiltered(null, filters.home.area, filters.home.period);
+  const el = document.getElementById('homeContent');
+  if (!items.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No hay indicadores para esta vista</div></div>'; return; }
+  const okrs = items.filter(i => i.type === 'okr');
+  const kpis = items.filter(i => i.type === 'kpi');
+  let html = '';
+  if (okrs.length) html += `<div class="section-header"><div class="section-title">🎯 Objetivos <span class="section-count">${okrs.length}</span></div></div><div class="cards-grid">${okrs.map(renderCard).join('')}</div>`;
+  if (kpis.length) html += `<div class="section-header" style="margin-top:${okrs.length ? '8px' : '0'}"><div class="section-title">📈 KPIs <span class="section-count">${kpis.length}</span></div></div><div class="cards-grid">${kpis.map(renderCard).join('')}</div>`;
+  el.innerHTML = html;
+  attachCardEvents('homeContent');
 }
+
 function renderOKRs() {
-  const items = getAll('okr', filters.okrs.area, filters.okrs.period);
+  const items = getFiltered('okr', filters.okrs.area, filters.okrs.period);
   const el = document.getElementById('okrsContent');
-  if(!items.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">No hay OKRs</div></div>`; return; }
+  if (!items.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">No hay OKRs</div></div>'; return; }
   el.innerHTML = `<div class="cards-grid">${items.map(renderCard).join('')}</div>`;
   attachCardEvents('okrsContent');
 }
+
 function renderKPIs() {
-  const items = getAll('kpi', filters.kpis.area, filters.kpis.period);
+  const items = getFiltered('kpi', filters.kpis.area, filters.kpis.period);
   const el = document.getElementById('kpisContent');
-  if(!items.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">No hay KPIs</div></div>`; return; }
+  if (!items.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">No hay KPIs</div></div>'; return; }
   el.innerHTML = `<div class="cards-grid">${items.map(renderCard).join('')}</div>`;
   attachCardEvents('kpisContent');
 }
+
 function renderAcciones() {
   const el = document.getElementById('accionesContent');
-  if(!actions.length) { el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-text">No hay acciones registradas</div></div>`; return; }
-  const rows = actions.map(a=>{
-    const ind = [...OKRsBase,...KPIsBase,...indicators].find(i=>i.id===a.indicatorId);
+  if (!actions.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-text">No hay acciones registradas</div></div>'; return; }
+  const rows = actions.map(a => {
+    const ind = allIndicators.find(i => i.id === a.indicatorId);
     const indName = ind ? ind.name : a.indicatorId;
     return `<div class="table-row table-cols-actions">
-      <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${indName}">${indName}</div>
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title||''}">${a.title||a.description||''}</div>
-      <div style="color:var(--text2)">${a.responsible||'—'}</div>
-      <div style="color:var(--text3);font-size:12px">${a.date?new Date(a.date+'T00:00:00').toLocaleDateString('es-CO'):''}</div>
-      <div><span class="status-pill status-${a.status||'inicio'}">${a.status==='mejora'?'✅ Mejora':a.status==='inicio'?'🔵 Inicio':'❌ Sin Mejora'}</span></div>
+      <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(indName)}">${escHtml(indName)}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(a.title || a.description || '')}</div>
+      <div style="color:var(--text2)">${escHtml(a.responsible || '—')}</div>
+      <div style="color:var(--text3);font-size:12px">${a.date ? new Date(a.date + 'T00:00:00').toLocaleDateString('es-CO') : ''}</div>
+      <div><span class="status-pill status-${a.status || 'inicio'}">${a.status === 'mejora' ? '✅ Mejora' : a.status === 'inicio' ? '🔵 Inicio' : '❌ Sin Mejora'}</span></div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-ghost edit-action-table" data-id="${a.id}" style="padding:5px 10px;font-size:11px">✏️</button>
         <button class="btn btn-danger del-action-table" data-id="${a.id}" style="padding:5px 10px;font-size:11px">🗑</button>
@@ -1436,81 +884,55 @@ function renderAcciones() {
     </div>`;
   }).join('');
   el.innerHTML = `<div class="table-wrap">
-    <div class="table-head table-cols-actions">
-      <span>Indicador</span><span>Descripción</span><span>Responsable</span><span>Fecha</span><span>Estado</span><span>Acciones</span>
-    </div>${rows}
+    <div class="table-head table-cols-actions"><span>Indicador</span><span>Descripción</span><span>Responsable</span><span>Fecha</span><span>Estado</span><span>Acciones</span></div>
+    ${rows}
   </div>`;
-  el.querySelectorAll('.edit-action-table').forEach(btn=>{
-    btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
+  el.querySelectorAll('.edit-action-table').forEach(btn => {
+    btn.addEventListener('click', () => { const a = actions.find(x => x.id == btn.dataset.id); if (a) openActionEditModal(a); });
   });
-  el.querySelectorAll('.del-action-table').forEach(btn=>{
-    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta acción?')){ await deleteActionDB(btn.dataset.id);
-await loadAll();
-renderAll(); } });
-  });
-}
-function renderAll() {
-  renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); updateBadges(); updateStats();
-}
-function updateBadges() {
-  const all = [...OKRsBase,...KPIsBase,...indicators];
-  document.getElementById('badge-home').textContent = all.length;
-  document.getElementById('badge-okrs').textContent = all.filter(i=>i.type==='okr').length;
-  document.getElementById('badge-kpis').textContent = all.filter(i=>i.type==='kpi').length;
-  document.getElementById('badge-acciones').textContent = actions.length;
-}
-function updateStats() {
-  const all = [...OKRsBase,...KPIsBase,...indicators];
-  const okrs = all.filter(i=>i.type==='okr');
-  const kpis = all.filter(i=>i.type==='kpi');
-  const avgOkr = okrs.length ? Math.round(okrs.reduce((s,i)=>s+Math.min((i.current/i.target)*100,100),0)/okrs.length) : 0;
-  const avgKpi = kpis.length ? Math.round(kpis.reduce((s,i)=>s+Math.min((i.current/i.target)*100,100),0)/kpis.length) : 0;
-  const mejoras = actions.filter(a=>a.status==='mejora').length;
-  document.getElementById('statOkrs').textContent = okrs.length;
-  document.getElementById('statOkrPct').textContent = avgOkr+'% avg';
-  document.getElementById('statKpis').textContent = kpis.length;
-  document.getElementById('statKpiPct').textContent = avgKpi+'% avg';
-  document.getElementById('statAcciones').textContent = actions.length;
-  document.getElementById('statAccPct').textContent = mejoras+' mejoras';
-  document.getElementById('statColabs').textContent = masterCollaborators.length;
-}
-
-function attachCardEvents(containerId) {
-  const el = document.getElementById(containerId);
-  el.querySelectorAll('.btn-edit-ind').forEach(btn=>{
-    btn.addEventListener('click',()=>{ const id=btn.dataset.id; const ind=[...OKRsBase,...KPIsBase,...indicators].find(i=>i.id==id); if(ind) openIndicatorModal(ind); });
-  });
-  el.querySelectorAll('.btn-add-action').forEach(btn=>{
-    btn.addEventListener('click',()=>{ const id=btn.dataset.id; const ind=[...OKRsBase,...KPIsBase,...indicators].find(i=>i.id==id); if(ind) openActionModal(id,ind.name); });
-  });
-  el.querySelectorAll('.assign-collab-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ if(!masterCollaborators.length){alert('Primero agrega colaboradores en 👥 Equipo');return;} openAssignModal(btn.dataset.id,btn.dataset.name); });
-  });
-  el.querySelectorAll('.edit-indiv-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ openAssignModal(btn.dataset.kpiid,btn.dataset.kpiname,btn.dataset.idx); });
-  });
-  el.querySelectorAll('.delete-indiv-btn').forEach(btn=>{
-    btn.addEventListener('click',async()=>{ if(confirm('¿Eliminar esta asignación?')){ await deleteAssignDB(btn.dataset.kpiid,btn.dataset.idx); await loadAll();
-renderAll(); } });
-  });
-  el.querySelectorAll('.edit-action-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ const a=actions.find(x=>x.id==btn.dataset.id); if(a) openActionEditModal(a); });
-  });
-  // Animate progress bars
-  requestAnimationFrame(()=>{
-    el.querySelectorAll('.ind-progress-fill').forEach(bar=>{
-      const w = bar.dataset.pct + '%';
-      bar.style.width = '0';
-      setTimeout(()=>{ bar.style.width = w; }, 100);
+  el.querySelectorAll('.del-action-table').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('¿Eliminar esta acción?')) { await deleteActionDB(btn.dataset.id); await loadAll(); renderAll(); }
     });
   });
 }
 
-// ── Modals ────────────────────────────────────
-function openIndicatorModal(ind=null) {
-  editingId = ind?.id || null;
-  document.querySelectorAll('.type-opt,.period-opt').forEach(o=>o.classList.remove('selected'));
-  if(ind) {
+function renderAll() {
+  renderHome(); renderOKRs(); renderKPIs(); renderAcciones(); updateBadges(); updateStats();
+}
+
+function updateBadges() {
+  document.getElementById('badge-home').textContent = allIndicators.length;
+  document.getElementById('badge-okrs').textContent = allIndicators.filter(i => i.type === 'okr').length;
+  document.getElementById('badge-kpis').textContent = allIndicators.filter(i => i.type === 'kpi').length;
+  document.getElementById('badge-acciones').textContent = actions.length;
+}
+
+function updateStats() {
+  const okrs = allIndicators.filter(i => i.type === 'okr');
+  const kpis = allIndicators.filter(i => i.type === 'kpi');
+  const avgOkr = okrs.length ? Math.round(okrs.reduce((s, i) => s + Math.min((i.current / i.target) * 100, 100), 0) / okrs.length) : 0;
+  const avgKpi = kpis.length ? Math.round(kpis.reduce((s, i) => s + Math.min((i.current / i.target) * 100, 100), 0) / kpis.length) : 0;
+  const mejoras = actions.filter(a => a.status === 'mejora').length;
+  document.getElementById('statOkrs').textContent = okrs.length;
+  document.getElementById('statOkrPct').textContent = avgOkr + '% avg';
+  document.getElementById('statKpis').textContent = kpis.length;
+  document.getElementById('statKpiPct').textContent = avgKpi + '% avg';
+  document.getElementById('statAcciones').textContent = actions.length;
+  document.getElementById('statAccPct').textContent = mejoras + ' mejoras';
+  document.getElementById('statColabs').textContent = masterCollaborators.length;
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function openIndicatorModal(ind = null) {
+  editingId = ind ? ind.id : null;
+  document.querySelectorAll('.type-opt, .period-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('indicatorForm').reset();
+  if (ind) {
     document.getElementById('modalTitle').textContent = 'Editar Indicador';
     document.getElementById('deleteIndBtn').style.display = 'inline-flex';
     document.querySelector(`.type-opt[data-type="${ind.type}"]`)?.classList.add('selected');
@@ -1520,341 +942,297 @@ function openIndicatorModal(ind=null) {
     document.getElementById('indicatorArea').value = ind.area;
     document.getElementById('indicatorTarget').value = ind.target;
     document.getElementById('indicatorUnit').value = ind.unit;
-    document.getElementById('indicatorCurrent').value = ind.current||'';
+    document.getElementById('indicatorCurrent').value = ind.current || '';
     document.getElementById('indicatorPeriod').value = ind.period;
   } else {
     document.getElementById('modalTitle').textContent = 'Nuevo Indicador';
     document.getElementById('deleteIndBtn').style.display = 'none';
-    document.getElementById('indicatorForm').reset();
   }
   openModal('indicatorModal');
 }
 
 function openActionModal(indId, indName) {
-  document.getElementById('actionIndId').value = indId;
-  document.getElementById('actionIndName').textContent = indName;
-  document.getElementById('actionDate').valueAsDate = new Date();
-  document.getElementById('actionForm').reset();
-  document.getElementById('actionIndId').value = indId;
+  // Rebuild the modal in case it was replaced by edit mode
+  const mc = document.getElementById('actionModalContent');
+  const collabOptions = masterCollaborators.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  mc.innerHTML = `
+    <button class="modal-close" onclick="closeModal('actionModal')">×</button>
+    <div class="modal-title">Nueva Acción</div>
+    <div class="modal-sub">Registra una acción para <strong>${escHtml(indName)}</strong></div>
+    <form id="actionForm">
+      <input type="hidden" id="actionIndId" value="${indId}">
+      <div class="form-group"><label class="form-label">Descripción *</label>
+        <textarea class="form-textarea" id="actionDesc" required placeholder="Describe la acción tomada..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Fecha *</label>
+          <input class="form-input" type="date" id="actionDate" required></div>
+        <div class="form-group"><label class="form-label">Estado *</label>
+          <select class="form-select" id="actionStatus" required>
+            <option value="">— Seleccionar —</option>
+            <option value="inicio">🔵 En Inicio</option>
+            <option value="mejora">✅ Mejora</option>
+            <option value="nomejora">❌ Sin Mejora</option>
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Responsable</label>
+        <select class="form-select" id="actionResp"><option value="">Sin asignar</option>${collabOptions}</select></div>
+      <div class="form-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Registrar</button>
+      </div>
+    </form>`;
+  // Set today's date
+  const dateInput = mc.querySelector('#actionDate');
+  if (dateInput) dateInput.valueAsDate = new Date();
+  mc.querySelector('#actionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const desc = mc.querySelector('#actionDesc').value.trim();
+    const date = mc.querySelector('#actionDate').value;
+    const status = mc.querySelector('#actionStatus').value;
+    const resp = mc.querySelector('#actionResp').value;
+    if (!desc || !date || !status) { alert('Completa todos los campos'); return; }
+    const ok = await saveActionDB({ indicatorId: indId, description: desc, date, status, responsible: resp || 'Sin asignar' });
+    if (ok) { closeModal('actionModal'); await loadAll(); renderAll(); }
+  });
   openModal('actionModal');
 }
 
 function openActionEditModal(action) {
-  const ind = [...OKRsBase,...KPIsBase,...indicators].find(i=>i.id===action.indicatorId);
+  const ind = allIndicators.find(i => i.id === action.indicatorId);
   const indName = ind ? ind.name : action.indicatorId;
+  const collabOptions = masterCollaborators.map(c => `<option value="${escHtml(c)}" ${action.responsible === c ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
   const mc = document.getElementById('actionModalContent');
   mc.innerHTML = `
     <button class="modal-close" onclick="closeModal('actionModal')">×</button>
     <div class="modal-title">Editar Acción</div>
-    <div class="modal-sub">${indName}</div>
+    <div class="modal-sub">${escHtml(indName)}</div>
     <div class="form-group"><label class="form-label">Descripción *</label>
-      <textarea class="form-textarea" id="eaTitle">${action.title||action.description||''}</textarea></div>
+      <textarea class="form-textarea" id="eaTitle">${escHtml(action.title || action.description || '')}</textarea></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Responsable</label>
-        <select class="form-select" id="eaResp">
-          <option value="">Sin asignar</option>
-          ${masterCollaborators.map(c=>`<option value="${c}" ${action.responsible===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </div>
+        <select class="form-select" id="eaResp"><option value="">Sin asignar</option>${collabOptions}</select></div>
       <div class="form-group"><label class="form-label">Fecha</label>
-        <input class="form-input" type="date" id="eaDate" value="${action.date||''}"></div>
+        <input class="form-input" type="date" id="eaDate" value="${action.date || ''}"></div>
     </div>
     <div class="form-group"><label class="form-label">Estado</label>
       <select class="form-select" id="eaStatus">
-        <option value="inicio" ${action.status==='inicio'?'selected':''}>🔵 En Inicio</option>
-        <option value="mejora" ${action.status==='mejora'?'selected':''}>✅ Mejora</option>
-        <option value="nomejora" ${action.status==='nomejora'?'selected':''}>❌ Sin Mejora</option>
-      </select>
-    </div>
+        <option value="inicio" ${action.status === 'inicio' ? 'selected' : ''}>🔵 En Inicio</option>
+        <option value="mejora" ${action.status === 'mejora' ? 'selected' : ''}>✅ Mejora</option>
+        <option value="nomejora" ${action.status === 'nomejora' ? 'selected' : ''}>❌ Sin Mejora</option>
+      </select></div>
     <div class="form-footer">
-      <button class="btn btn-danger" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteActionDB('${action.id}');closeModal('actionModal');await loadAll();
-renderAll();}})()">🗑 Eliminar</button>
+      <button class="btn btn-danger" id="eaDeleteBtn" style="margin-right:auto">🗑 Eliminar</button>
       <button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="(async()=>{
-        const t=document.getElementById('eaTitle').value.trim();
-        if(!t){alert('La descripción no puede estar vacía');return;}
-        const ok=await updateActionDB('${action.id}',{title:t,responsible:document.getElementById('eaResp').value,date:document.getElementById('eaDate').value,status:document.getElementById('eaStatus').value});
-        if(ok){closeModal('actionModal');await loadAll();
-renderAll();}
-      })()">💾 Guardar</button>
+      <button class="btn btn-primary" id="eaSaveBtn">💾 Guardar</button>
     </div>`;
+  mc.querySelector('#eaDeleteBtn').addEventListener('click', async () => {
+    if (confirm('¿Eliminar esta acción?')) {
+      await deleteActionDB(action.id); closeModal('actionModal'); await loadAll(); renderAll();
+    }
+  });
+  mc.querySelector('#eaSaveBtn').addEventListener('click', async () => {
+    const t = mc.querySelector('#eaTitle').value.trim();
+    if (!t) { alert('La descripción no puede estar vacía'); return; }
+    const ok = await updateActionDB(action.id, {
+      title: t, responsible: mc.querySelector('#eaResp').value,
+      date: mc.querySelector('#eaDate').value, status: mc.querySelector('#eaStatus').value
+    });
+    if (ok) { closeModal('actionModal'); await loadAll(); renderAll(); }
+  });
   openModal('actionModal');
 }
 
-function openAssignModal(kpiId, kpiName, editIdx=null) {
+function openAssignModal(kpiId, kpiName, editIdx = null) {
   document.getElementById('assignKpiId').value = kpiId;
-  document.getElementById('assignEditIdx').value = editIdx!==null ? editIdx : '';
-  document.getElementById('assignModalTitle').textContent = editIdx!==null ? 'Editar Meta' : `Asignar a: ${kpiName}`;
-  document.getElementById('assignSubmitBtn').textContent = editIdx!==null ? 'Actualizar' : 'Asignar';
+  document.getElementById('assignModalTitle').textContent = editIdx !== null ? 'Editar Meta' : `Asignar a: ${kpiName}`;
+  document.getElementById('assignSubmitBtn').textContent = editIdx !== null ? 'Actualizar' : 'Asignar';
   const sel = document.getElementById('assignCollabSel');
-  sel.innerHTML = '<option value="">— Seleccionar —</option>' + masterCollaborators.map(n=>`<option value="${n}">${n}</option>`).join('');
-  document.getElementById('assignForm').reset();
-  document.getElementById('assignKpiId').value = kpiId;
-  document.getElementById('assignEditIdx').value = editIdx!==null ? editIdx : '';
-  if(editIdx!==null) {
-    const a = kpiAssignments[kpiId][editIdx];
-    sel.value = a.name;
-    sel.disabled = true;
-    document.getElementById('assignTarget').value = a.target;
-    document.getElementById('assignCurrent').value = a.current||'';
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' + masterCollaborators.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+  document.getElementById('assignTarget').value = '';
+  document.getElementById('assignCurrent').value = '';
+  document.getElementById('assignRecordId').value = '';
+  if (editIdx !== null) {
+    const a = kpiAssignments[kpiId]?.[editIdx];
+    if (a) {
+      sel.value = a.name; sel.disabled = true;
+      document.getElementById('assignTarget').value = a.target;
+      document.getElementById('assignCurrent').value = a.current || '';
+      document.getElementById('assignRecordId').value = a.id;
+    }
   } else {
     sel.disabled = false;
   }
   openModal('assignModal');
 }
 
-async function loadAll() {
-  const [i,a,c,as] = await Promise.all([
-    sb.from('kpi_indicators').select('*'),
-    sb.from('kpi_actions').select('*'),
-    sb.from('kpi_collaborators').select('*'),
-    sb.from('kpi_assignments').select('*')
-  ]);
-
-  // Indicadores
-  indicators = (i.data || []).map(r => ({
-    id: r.id,
-    type: r.type,
-    name: r.name,
-    area: r.area,
-    target: r.target,
-    unit: r.unit,
-    current: r.current,
-    period: r.period
-  }));
-
-  // Acciones
-  actions = (a.data || []).map(r => ({
-    id: r.id,
-    indicatorId: r.indicator_id,
-    title: r.title,
-    description: r.title,
-    date: r.date,
-    status: r.status,
-    responsible: r.responsible
-  }));
-
-  // Colaboradores
-  masterCollaborators = (c.data || []).map(r => r.name);
-
-  // Asignaciones
-  kpiAssignments = {};
-  (as.data || []).forEach(r => {
-    if (!kpiAssignments[r.kpi_id]) kpiAssignments[r.kpi_id] = [];
-    kpiAssignments[r.kpi_id].push({
-      id: r.id,
-      name: r.collab_name,
-      target: r.target,
-      current: r.current
-    });
-  });
-}
-
-async function saveIndicatorDB(data) {
-if (editingId) {
-  const { error } = await sb.from('kpi_indicators')
-    .upsert({
-      id: editingId,
-      type: data.type,
-      name: data.name,
-      area: data.area,
-      target: data.target,
-      unit: data.unit,
-      current: data.current,
-      period: data.period
-    });
-
-  if (error) {
-    alert('Error: ' + error.message);
-    return false;
-  }
-
-  return true;
-}
-
-  const newId = 'kpi-' + Date.now();
-
-const { data: saved, error } = await sb
-  .from('kpi_indicators')
-  .insert({
-    id: newId,
-    type: data.type,
-    name: data.name,
-    area: data.area,
-    target: data.target,
-    unit: data.unit,
-    current: data.current,
-    period: data.period
-  })
-    .select()
-    .single();
-
-  if (error) {
-    alert('Error: ' + error.message);
-    return false;
-  }
-
-  return true;
-}
-
-// ── Init ──────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async()=>{
- try {
-  await loadAll();
-  renderAll();
-  document.getElementById('loadingOverlay').style.display='none';
-} catch (e) {
-  console.error("Error Supabase:", e);
-  alert("Error conectando con Supabase");
-}
-
-  // Nav
-  document.querySelectorAll('.nav-link[data-section]').forEach(link=>{
-    link.addEventListener('click',e=>{
-      e.preventDefault();
-      const s = link.dataset.section;
-      document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
-      document.getElementById(s).classList.add('active');
-      document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-      link.classList.add('active');
-      const titles={home:'Dashboard <span>General</span>',okrs:'Objetivos <span>y Resultados</span>',kpis:'Indicadores <span>Clave</span>',acciones:'Seguimiento <span>de Acciones</span>'};
-      document.getElementById('topbarTitle').innerHTML = titles[s]||s;
-    });
-  });
-
-  // Filters — home
-  document.querySelectorAll('[data-filter="area"]').forEach(chip=>{
-    chip.addEventListener('click',()=>{
-      document.querySelectorAll('[data-filter="area"]').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      filters.home.area = chip.dataset.value;
-      renderHome();
-    });
-  });
-  document.querySelectorAll('[data-filter="period"]').forEach(chip=>{
-    chip.addEventListener('click',()=>{
-      document.querySelectorAll('[data-filter="period"]').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      filters.home.period = chip.dataset.value;
-      renderHome();
-    });
-  });
-  // OKR filters
-  document.querySelectorAll('.okr-area-f').forEach(chip=>{
-    chip.addEventListener('click',()=>{ document.querySelectorAll('.okr-area-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.okrs.area=chip.dataset.value; renderOKRs(); });
-  });
-  document.querySelectorAll('.okr-period-f').forEach(chip=>{
-    chip.addEventListener('click',()=>{ document.querySelectorAll('.okr-period-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.okrs.period=chip.dataset.value; renderOKRs(); });
-  });
-  // KPI filters
-  document.querySelectorAll('.kpi-area-f').forEach(chip=>{
-    chip.addEventListener('click',()=>{ document.querySelectorAll('.kpi-area-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.kpis.area=chip.dataset.value; renderKPIs(); });
-  });
-  document.querySelectorAll('.kpi-period-f').forEach(chip=>{
-    chip.addEventListener('click',()=>{ document.querySelectorAll('.kpi-period-f').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); filters.kpis.period=chip.dataset.value; renderKPIs(); });
-  });
-
-  // Type/period selectors in modal
-  document.querySelectorAll('.type-opt').forEach(o=>{
-    o.addEventListener('click',()=>{ document.querySelectorAll('.type-opt').forEach(x=>x.classList.remove('selected')); o.classList.add('selected'); document.getElementById('indicatorType').value=o.dataset.type; });
-  });
-  document.querySelectorAll('.period-opt').forEach(o=>{
-    o.addEventListener('click',()=>{ document.querySelectorAll('.period-opt').forEach(x=>x.classList.remove('selected')); o.classList.add('selected'); document.getElementById('indicatorPeriod').value=o.dataset.period; });
-  });
-
-  // Buttons
-  document.getElementById('addBtn').addEventListener('click',()=>openIndicatorModal());
-  document.getElementById('manageCollabsBtn').addEventListener('click',()=>{ renderCollabList(); openModal('collabModal'); });
-  document.getElementById('collabsNavBtn').addEventListener('click',e=>{ e.preventDefault(); renderCollabList(); openModal('collabModal'); });
-  document.getElementById('closeIndicatorModal').addEventListener('click',()=>closeModal('indicatorModal'));
-  document.getElementById('cancelIndBtn').addEventListener('click',()=>closeModal('indicatorModal'));
-  document.getElementById('deleteIndBtn').addEventListener('click',async()=>{
-    if(confirm('¿Eliminar este indicador?')){ const ok=await deleteIndicatorDB(editingId); if(ok){closeModal('indicatorModal');await loadAll();
-renderAll();} }
-  });
-
-  // Forms
-  document.getElementById('indicatorForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const type=document.getElementById('indicatorType').value;
-    const period=document.getElementById('indicatorPeriod').value;
-    if(!type||!period){alert('Selecciona tipo y periodicidad');return;}
-    const data={id:editingId||null,type,name:document.getElementById('indicatorName').value,area:document.getElementById('indicatorArea').value,target:parseFloat(document.getElementById('indicatorTarget').value),unit:document.getElementById('indicatorUnit').value,current:parseFloat(document.getElementById('indicatorCurrent').value)||0,period};
-    const ok=await saveIndicatorDB(data);
-    if(ok){closeModal('indicatorModal');await loadAll();
-renderAll();}
-  });
-
-  document.getElementById('actionForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const indId=document.getElementById('actionIndId').value;
-    const desc=document.getElementById('actionDesc').value.trim();
-    const date=document.getElementById('actionDate').value;
-    const status=document.getElementById('actionStatus').value;
-    const resp=document.getElementById('actionResp').value.trim();
-    if(!desc||!date||!status){alert('Completa todos los campos');return;}
-    const ok=await saveActionDB({indicatorId:indId,description:desc,date,status,responsible:resp||'No asignado'});
-    if(ok){
-  closeModal('actionModal');
-  await loadAll();
-  renderAll();
-}
-  });
-
- document.getElementById('collabForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const name=document.getElementById('newCollabName').value.trim();
-    if(!name) return;
-    if(masterCollaborators.includes(name)){alert('Ya existe');return;}
-    const ok=await saveCollabDB(name);
-    if(ok){document.getElementById('newCollabName').value='';renderCollabList();updateStats();}
-  });
-
-  document.getElementById('assignForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const kpiId=document.getElementById('assignKpiId').value;
-    const editIdx=document.getElementById('assignEditIdx').value;
-    const name=document.getElementById('assignCollabSel').value;
-    const target=parseFloat(document.getElementById('assignTarget').value);
-    const current=parseFloat(document.getElementById('assignCurrent').value)||0;
-    if(!name){alert('Selecciona un colaborador');return;}
-    if(editIdx!==''){
-      const a=kpiAssignments[kpiId][editIdx];
-      const ok=await updateAssignDB(a.id,{target,current});
-      if(ok){kpiAssignments[kpiId][editIdx]={...a,target,current};}
-    } else {
-      if((kpiAssignments[kpiId]||[]).some(a=>a.name===name)){alert('Ya está asignado');return;}
-      await saveAssignDB(kpiId,{name,target,current});
-    }
-    closeModal('assignModal');
-    await loadAll();
-renderAll();
-  });
-
-  // Close on overlay click
-  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
-    overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('active'); });
-  });
-
-  await loadAll();
-renderAll();
-});
-
 function renderCollabList() {
   const list = document.getElementById('collabListModal');
-  if(!masterCollaborators.length){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Sin colaboradores registrados</div>';return;}
-  list.innerHTML = masterCollaborators.map(name=>{
-    const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  if (!masterCollaborators.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Sin colaboradores registrados</div>';
+    return;
+  }
+  list.innerHTML = masterCollaborators.map(name => {
+    const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
     return `<div class="collab-list-item">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="collab-avatar">${initials}</div>
-        <span style="font-weight:600">${name}</span>
+        <span style="font-weight:600">${escHtml(name)}</span>
       </div>
-      <button class="icon-btn del" onclick="(async()=>{if(confirm('¿Eliminar?')){await deleteCollabDB('${name}');renderCollabList();updateStats();await loadAll();
-renderAll();}})()">✕</button>
+      <button class="icon-btn del del-collab-btn" data-name="${escHtml(name)}">✕</button>
     </div>`;
   }).join('');
+  list.querySelectorAll('.del-collab-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm(`¿Eliminar a ${btn.dataset.name}?`)) {
+        await deleteCollabDB(btn.dataset.name);
+        renderCollabList(); updateStats(); await loadAll(); renderAll();
+      }
+    });
+  });
 }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await seedIfEmpty();
+    document.getElementById('loadingText').textContent = 'Cargando datos...';
+    await loadAll();
+    renderAll();
+    document.getElementById('loadingOverlay').style.display = 'none';
+  } catch (e) {
+    console.error('Error Supabase:', e);
+    document.getElementById('loadingText').textContent = 'Error conectando. Revisa la consola.';
+  }
+
+  // Navigation
+  document.querySelectorAll('.nav-link[data-section]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const s = link.dataset.section;
+      document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+      document.getElementById(s).classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const titles = { home: 'Dashboard <span>General</span>', okrs: 'Objetivos <span>y Resultados</span>', kpis: 'Indicadores <span>Clave</span>', acciones: 'Seguimiento <span>de Acciones</span>' };
+      document.getElementById('topbarTitle').innerHTML = titles[s] || s;
+    });
+  });
+
+  // Home filters
+  document.querySelectorAll('[data-filter="area"]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter="area"]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active'); filters.home.area = chip.dataset.value; renderHome();
+    });
+  });
+  document.querySelectorAll('[data-filter="period"]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter="period"]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active'); filters.home.period = chip.dataset.value; renderHome();
+    });
+  });
+  // OKR filters
+  document.querySelectorAll('.okr-area-f').forEach(chip => {
+    chip.addEventListener('click', () => { document.querySelectorAll('.okr-area-f').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filters.okrs.area = chip.dataset.value; renderOKRs(); });
+  });
+  document.querySelectorAll('.okr-period-f').forEach(chip => {
+    chip.addEventListener('click', () => { document.querySelectorAll('.okr-period-f').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filters.okrs.period = chip.dataset.value; renderOKRs(); });
+  });
+  // KPI filters
+  document.querySelectorAll('.kpi-area-f').forEach(chip => {
+    chip.addEventListener('click', () => { document.querySelectorAll('.kpi-area-f').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filters.kpis.area = chip.dataset.value; renderKPIs(); });
+  });
+  document.querySelectorAll('.kpi-period-f').forEach(chip => {
+    chip.addEventListener('click', () => { document.querySelectorAll('.kpi-period-f').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filters.kpis.period = chip.dataset.value; renderKPIs(); });
+  });
+
+  // Type / period selector in modal
+  document.querySelectorAll('.type-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      document.querySelectorAll('.type-opt').forEach(x => x.classList.remove('selected'));
+      o.classList.add('selected'); document.getElementById('indicatorType').value = o.dataset.type;
+    });
+  });
+  document.querySelectorAll('.period-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      document.querySelectorAll('.period-opt').forEach(x => x.classList.remove('selected'));
+      o.classList.add('selected'); document.getElementById('indicatorPeriod').value = o.dataset.period;
+    });
+  });
+
+  // Buttons
+  document.getElementById('addBtn').addEventListener('click', () => openIndicatorModal());
+  document.getElementById('manageCollabsBtn').addEventListener('click', () => { renderCollabList(); openModal('collabModal'); });
+  document.getElementById('collabsNavBtn').addEventListener('click', e => { e.preventDefault(); renderCollabList(); openModal('collabModal'); });
+  document.getElementById('closeIndicatorModal').addEventListener('click', () => closeModal('indicatorModal'));
+  document.getElementById('cancelIndBtn').addEventListener('click', () => closeModal('indicatorModal'));
+
+  document.getElementById('deleteIndBtn').addEventListener('click', async () => {
+    if (confirm('¿Eliminar este indicador y todos sus datos asociados?')) {
+      const ok = await deleteIndicatorDB(editingId);
+      if (ok) { closeModal('indicatorModal'); await loadAll(); renderAll(); }
+    }
+  });
+
+  // Indicator form
+  document.getElementById('indicatorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const type = document.getElementById('indicatorType').value;
+    const period = document.getElementById('indicatorPeriod').value;
+    if (!type || !period) { alert('Selecciona tipo y periodicidad'); return; }
+    const id = editingId || (type === 'okr' ? 'okr-' : 'kpi-') + Date.now();
+    const data = {
+      id, type, name: document.getElementById('indicatorName').value,
+      area: document.getElementById('indicatorArea').value,
+      target: parseFloat(document.getElementById('indicatorTarget').value),
+      unit: document.getElementById('indicatorUnit').value,
+      current: parseFloat(document.getElementById('indicatorCurrent').value) || 0,
+      period
+    };
+    const btn = document.getElementById('saveIndBtn');
+    btn.textContent = 'Guardando...'; btn.disabled = true;
+    const ok = await saveIndicatorDB(data);
+    btn.textContent = 'Guardar'; btn.disabled = false;
+    if (ok) { closeModal('indicatorModal'); await loadAll(); renderAll(); }
+  });
+
+  // Collab form
+  document.getElementById('collabForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newCollabName').value.trim();
+    if (!name) return;
+    if (masterCollaborators.includes(name)) { alert('Ya existe este colaborador'); return; }
+    const ok = await saveCollabDB(name);
+    if (ok) { document.getElementById('newCollabName').value = ''; renderCollabList(); updateStats(); }
+  });
+
+  // Assign form
+  document.getElementById('assignForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const kpiId = document.getElementById('assignKpiId').value;
+    const recordId = document.getElementById('assignRecordId').value;
+    const name = document.getElementById('assignCollabSel').value;
+    const target = parseFloat(document.getElementById('assignTarget').value);
+    const current = parseFloat(document.getElementById('assignCurrent').value) || 0;
+    if (!name) { alert('Selecciona un colaborador'); return; }
+    if (isNaN(target)) { alert('Ingresa una meta válida'); return; }
+    const btn = document.getElementById('assignSubmitBtn');
+    btn.disabled = true;
+    if (recordId) {
+      await updateAssignDB(recordId, { target, current });
+    } else {
+      if ((kpiAssignments[kpiId] || []).some(a => a.name === name)) { alert('Este colaborador ya está asignado a este KPI'); btn.disabled = false; return; }
+      await saveAssignDB(kpiId, { name, target, current });
+    }
+    btn.disabled = false;
+    closeModal('assignModal'); await loadAll(); renderAll();
+  });
+
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+  });
+});
 </script>
 </body>
 </html>
