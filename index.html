@@ -1278,7 +1278,16 @@ async function loadAll() {
       sb.from('kpi_collaborators').select('*'),
       sb.from('kpi_assignments').select('*')
     ]);
-    indicators = (i.data||[]).map(r=>({id:r.id,type:r.type,name:r.name,area:r.area,target:r.target,unit:r.unit,current:r.current,period:r.period}));
+    const allFromDB = (i.data||[]).map(r=>({id:r.id,type:r.type,name:r.name,area:r.area,target:r.target,unit:r.unit,current:r.current,period:r.period}));
+    // Aplicar overrides de indicadores base guardados en Supabase
+    allFromDB.forEach(dbInd => {
+      const baseOkr = OKRsBase.findIndex(x=>x.id===dbInd.id);
+      if(baseOkr!==-1){ OKRsBase[baseOkr]={...OKRsBase[baseOkr],...dbInd}; return; }
+      const baseKpi = KPIsBase.findIndex(x=>x.id===dbInd.id);
+      if(baseKpi!==-1){ KPIsBase[baseKpi]={...KPIsBase[baseKpi],...dbInd}; return; }
+    });
+    // Solo quedan los personalizados (no base) en indicators
+    indicators = allFromDB.filter(d => ![...OKRsBase,...KPIsBase].some(b=>b.id===d.id));
     actions = (a.data||[]).map(r=>({id:r.id,indicatorId:r.indicator_id,title:r.title,description:r.title,date:r.date,status:r.status,responsible:r.responsible}));
     masterCollaborators = (c.data||[]).map(r=>r.name);
     kpiAssignments = {};
