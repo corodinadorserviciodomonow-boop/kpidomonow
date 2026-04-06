@@ -1651,30 +1651,10 @@ async function loadAll() {
 }
 
 async function saveIndicatorDB(data) {
-  if (editingId) {
-    const { error } = await sb.from('kpi_indicators')
-      .update({
-        type: data.type,
-        name: data.name,
-        area: data.area,
-        target: data.target,
-        unit: data.unit,
-        current: data.current,
-        period: data.period
-      })
-      .eq('id', editingId);
-
-    if (error) {
-      alert('Error: ' + error.message);
-      return false;
-    }
-
-    return true;
-  }
-
-  const { data: saved, error } = await sb
-    .from('kpi_indicators')
-    .insert({
+if (editingId) {
+  const { error } = await sb.from('kpi_indicators')
+    .upsert({
+      id: editingId,
       type: data.type,
       name: data.name,
       area: data.area,
@@ -1682,7 +1662,30 @@ async function saveIndicatorDB(data) {
       unit: data.unit,
       current: data.current,
       period: data.period
-    })
+    });
+
+  if (error) {
+    alert('Error: ' + error.message);
+    return false;
+  }
+
+  return true;
+}
+
+  const newId = 'kpi-' + Date.now();
+
+const { data: saved, error } = await sb
+  .from('kpi_indicators')
+  .insert({
+    id: newId,
+    type: data.type,
+    name: data.name,
+    area: data.area,
+    target: data.target,
+    unit: data.unit,
+    current: data.current,
+    period: data.period
+  })
     .select()
     .single();
 
