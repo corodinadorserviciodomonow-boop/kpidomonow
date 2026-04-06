@@ -1650,6 +1650,50 @@ async function loadAll() {
   });
 }
 
+async function saveIndicatorDB(data) {
+  if (editingId) {
+    const { error } = await sb.from('kpi_indicators')
+      .update({
+        type: data.type,
+        name: data.name,
+        area: data.area,
+        target: data.target,
+        unit: data.unit,
+        current: data.current,
+        period: data.period
+      })
+      .eq('id', editingId);
+
+    if (error) {
+      alert('Error: ' + error.message);
+      return false;
+    }
+
+    return true;
+  }
+
+  const { data: saved, error } = await sb
+    .from('kpi_indicators')
+    .insert({
+      type: data.type,
+      name: data.name,
+      area: data.area,
+      target: data.target,
+      unit: data.unit,
+      current: data.current,
+      period: data.period
+    })
+    .select()
+    .single();
+
+  if (error) {
+    alert('Error: ' + error.message);
+    return false;
+  }
+
+  return true;
+}
+
 // ── Init ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
  try {
